@@ -3,11 +3,12 @@ import os
 import sys
 
 from image import Image
-
-IMAGE_COORDINATES_FILE = 'image_coordinates.txt'
-METADATA_FILE = 'metadata.txt'
+from imagecollection import ImageCollection
 
 class FoV(object):
+
+  IMAGE_COORDINATES_FILE = 'image_coordinates.txt'
+  METADATA_FILE = 'metadata.txt'  
 
   def __init__(self, directory, metadata, images):
     '''
@@ -22,6 +23,9 @@ class FoV(object):
     self._height = -1
     # calculate these values
     self.update_bounding_box()
+
+    self._imagedata = None
+    self._thumbnail = None
 
   def __str__(self):
     '''
@@ -62,11 +66,11 @@ class FoV(object):
     self._height = height
 
 
-  def stitch_thumbnails(self):
+  def stitch_thumbnails(self, level=0):
     '''
     '''
-    # calculate ratio between one image and its' thumbnail
-    ratio = 4
+    # TODO calculate ratio between one image and its' thumbnail, right now we assume 4
+    ratio = 4*(level+1)
 
     width = self._width / ratio
     height = self._height / ratio
@@ -79,13 +83,25 @@ class FoV(object):
       x = (image._tx - self._tx) / ratio
       y = (image._ty - self._ty) / ratio
 
-      thumb = image._thumbnail
+      thumb = image._thumbnail.levels[level].pixels
       out[y:y+thumb.shape[0],x:x+thumb.shape[1]] = thumb
 
-    return out
-    
-    # import cv2
-    # cv2.imwrite('/tmp/fov.jpg', out)
+    return ImageCollection(out)
+
+
+  def load_and_stitch_thumbnails(self):
+    '''
+    '''
+    # first load the thumbnails from disk
+    for i in self._images:
+      image = self._images[i]
+      image.load_thumbnail(self._directory)
+
+    # now create the pyramid
+    stitched = self.stitch_thumbnails()
+    stitched.create_full_pyramid()
+
+    self._thumbnail = stitched
 
 
   @staticmethod
@@ -98,8 +114,8 @@ class FoV(object):
     return None.
     '''
 
-    metadata_file = os.path.join(directory, METADATA_FILE)
-    image_coordinates_file = os.path.join(directory, IMAGE_COORDINATES_FILE)
+    metadata_file = os.path.join(directory, FoV.METADATA_FILE)
+    image_coordinates_file = os.path.join(directory, FoV.IMAGE_COORDINATES_FILE)
 
     # here we check if our image coordinates and metadata
     # files exist, if not we likely are not ready to parse yet
@@ -135,9 +151,9 @@ class FoV(object):
         image.width = width
         image.height = height
         images[image.id] = image
-        image.load_thumbnail(directory) # load the small representation
+        #image.load_thumbnail(directory) # load the small representation
+        
 
 
     fov = FoV(directory, metadata, images)
-    fov.stitch_thumbnails()
     return fov

@@ -4,6 +4,8 @@ import sys
 
 import _mbeam
 
+CACHE = {}
+
 def print_help( script_name ):
   '''
   Prints help.
@@ -27,4 +29,10 @@ if __name__ == "__main__":
 
   input_dir = sys.argv[1]
 
-  print _mbeam.FoV.from_directory(input_dir)
+  for f in os.listdir(input_dir):
+    f = os.path.join(input_dir, f)
+    if os.path.isdir(f):
+      print f
+      fov = _mbeam.FoV.from_directory(f)
+      fov.load_and_stitch_thumbnails()
+

@@ -1,9 +1,11 @@
 import cv2
 import os
 
-THUMBNAIL_PREFIX = 'thumbnail_'
+from imagecollection import ImageCollection
 
 class Image(object):
+
+  THUMBNAIL_PREFIX = 'thumbnail_'
 
   def __init__(self, filename, tx=-1, ty=-1, tz=-1):
     '''
@@ -41,14 +43,14 @@ class Image(object):
   def load(self, directory):
     '''
     '''
-    self._imagedata = cv2.imread(os.path.join(directory, self._filename), cv2.CV_LOAD_IMAGE_GRAYSCALE)
+    self._imagedata = ImageCollection(cv2.imread(os.path.join(directory, self._filename), cv2.CV_LOAD_IMAGE_GRAYSCALE))
 
   def load_thumbnail(self, directory):
     '''
     '''
-    thumbnail = cv2.imread(os.path.join(directory, THUMBNAIL_PREFIX + self._filename), cv2.CV_LOAD_IMAGE_GRAYSCALE)
+    thumbnail = cv2.imread(os.path.join(directory, Image.THUMBNAIL_PREFIX + self._filename), cv2.CV_LOAD_IMAGE_GRAYSCALE)
 
-    self._thumbnail = thumbnail[0:self.height/4,0:self.width/4] # TODO we crop to have a correct ratio of 4
+    self._thumbnail = ImageCollection(thumbnail[0:self.height/4,0:self.width/4]) # TODO we crop to have a correct ratio of 4
 
   @staticmethod
   def from_string(string, delimiter='\t'):
