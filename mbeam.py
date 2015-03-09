@@ -29,10 +29,8 @@ if __name__ == "__main__":
 
   input_dir = sys.argv[1]
 
-  for f in os.listdir(input_dir):
-    f = os.path.join(input_dir, f)
-    if os.path.isdir(f):
-      print f
-      fov = _mbeam.FoV.from_directory(f)
-      fov.load_and_stitch_thumbnails()
+  manager = _mbeam.Manager(input_dir)
+  manager.start()
 
+  webserver = _mbeam.WebServer(manager)
+  webserver.start()
