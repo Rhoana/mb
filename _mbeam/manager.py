@@ -115,12 +115,14 @@ class Manager(object):
     if not fov._thumbnail:
       print 'stitching'
       fov.load_and_stitch_thumbnails()
+      image = fov._thumbnail._levels[level]._pixels
+      cv2.imwrite('/tmp/cv2.jpg', image)
 
     ts = Manager.CLIENT_TILE_SIZE
 
     image = fov._thumbnail._levels[level]._pixels
     print image.shape
-    # cv2.imwrite('/tmp/cv2.jpg', image)
+    # 
     return cv2.imencode('.jpg', image[y*ts:y*ts+ts,x*ts:x*ts+ts])[1].tostring()
 
 

@@ -102,7 +102,7 @@ class WebServer:
     path = '/'.join(splitted_request[2:-1])
     tile = splitted_request[-1].split('-')
 
-    content = self._manager.get_image(path, int(tile[0]), int(tile[1]), int(tile[2]), int(tile[3]))
+    content = self._manager.get_image(path, int(tile[1]), int(tile[2]), int(tile[3]), int(tile[0]))
     content_type = 'image/jpeg'
     # TODO
 
