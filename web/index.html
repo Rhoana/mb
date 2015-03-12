@@ -1,19 +1,33 @@
 <html>
   <head>
     <title>MBEAM</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/jqtree.css">
+
+    <script type='text/javascript' src='lib/jquery.min.js'></script>
+    <script type='text/javascript' src='lib/jquery.cookie.min.js'></script>
+    <script type='text/javascript' src='lib/tree.jquery.js'></script>
     <script type='text/javascript' src='lib/openseadragon.min.js'></script>
-    <script type='text/javascript' src='js/websocket.js'></script>
+
+    <script type='text/javascript' src='js/controller.js'></script>
     <script type='text/javascript' src='js/manager.js'></script>
+    <script type='text/javascript' src='js/util.js'></script>
+    <script type='text/javascript' src='js/websocket.js'></script>
+    
     <script type='text/javascript'>
 
     window.onload = function() {
 
-      var MANAGER = D.manager();
+      MANAGER = new D.manager();
 
     }
 
+
+
     </script>
   </head>
-  <body id='body' style='margin:0px;padding:0px;'>
+  <body id='body'>
+    <div id='nav'></div>
+    <div id='viewer'></div>
   </body>
 </html>

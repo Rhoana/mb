@@ -4,6 +4,8 @@ D.websocket = function(manager) {
 
   this._manager = manager;
 
+  this._controller = this._manager._controller;
+
   this._socket = null;
 
   this.connect();
@@ -31,17 +33,19 @@ D.websocket.prototype.on_open = function() {
 
   console.log('Established websocket connection.');
 
+  this._controller.request_content();
+
 };
 
 D.websocket.prototype.on_message = function(m) {
 
-  console.log('Received', m);
+  this._controller.on_message(JSON.parse(m.data));
 
 };
 
 D.websocket.prototype.send = function(m) {
 
-  this._socket.send(m);
+  this._socket.send(JSON.stringify(m));
 
 };
 

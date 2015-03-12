@@ -1,4 +1,3 @@
-import cv2
 import os
 import socket
 import time
@@ -15,8 +14,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     '''
     '''
     self._manager = manager
-    self._manager._broadcaster = self
-    self.__controller = self._manager._websocket_controller
+    self._controller = self._manager._websocket_controller
 
   def open(self):
     '''
@@ -24,7 +22,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     if self not in cl:
       cl.append(self)
 
-    self.__controller.handshake(self)
+    self._controller.handshake(self)
 
   def on_close(self):
     '''
@@ -35,7 +33,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
   def on_message(self, message):
     '''
     '''
-    self.__controller.on_message(message)
+    self._controller.on_message(message)
 
   def send(self, message, binary=False):
     '''
@@ -91,7 +89,7 @@ class WebServer:
 
     print 'Starting webserver at \033[93mhttp://' + ip + ':' + str(port) + '\033[0m'
 
-    tornado.ioloop.PeriodicCallback(self._manager.tick, 100).start()
+    tornado.ioloop.PeriodicCallback(self._manager.tick, 200).start()
     tornado.ioloop.IOLoop.instance().start()
 
   @tornado.gen.coroutine
@@ -100,9 +98,15 @@ class WebServer:
     '''
     content = None
 
-    request = handler.request.uri.split('/')[-1]
+    splitted_request = handler.request.uri.split('/')
+    path = '/'.join(splitted_request[2:-1])
+    tile = splitted_request[-1].split('-')
 
+    content = self._manager.get_image(path, int(tile[0]), int(tile[1]), int(tile[2]), int(tile[3]))
+    content_type = 'image/jpeg'
     # TODO
+
+    
 
     # invalid request
     if not content:
