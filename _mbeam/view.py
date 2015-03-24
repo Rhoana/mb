@@ -5,9 +5,10 @@ from constants import Constants
 
 class View(object):
 
-  def __init__(self, canvases, fovs):
+  def __init__(self, data_path, canvases, fovs):
     '''
     '''
+    self._data_path = data_path
     self._canvases = canvases
     self._fovs = fovs
 
@@ -26,7 +27,7 @@ class View(object):
 
 
   @staticmethod
-  def create(fovs, width, height, tx, ty, ratio=1):
+  def create(data_path, fovs, width, height, tx, ty, ratio=1):
     '''
     '''
 
@@ -50,7 +51,7 @@ class View(object):
     #
     # create a new View
     #
-    return View(canvases, fovs)
+    return View(data_path, canvases, fovs)
     
 
 

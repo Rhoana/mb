@@ -5,6 +5,8 @@ D.manager = function() {
   this._websocket = null;
   this._controller = new D.controller(this);
 
+  this._viewer = null;
+
   this.init();
 
 };
@@ -63,12 +65,19 @@ D.manager.prototype.setup_viewer = function(content) {
 
   }
 
-  openseadragon = OpenSeadragon({
+  this._viewer = OpenSeadragon({
     id:            "viewer",
     prefixUrl:     "images/",
     navigatorSizeRatio: 0.25,
     preserveViewport: true,
     tileSources:   content
   });
+
+};
+
+D.manager.prototype.refresh_viewer = function() {
+
+  console.log('Refreshing');
+  this._viewer.world.resetItems();
 
 };

@@ -26,6 +26,8 @@ class Drawer(Worker):
         canvas.place_pixels(pixels, (fov._tx / 4) / 2**w, (fov._ty / 4) / 2**w)
 
 
+      # notify the manager for each FoV
+      manager.on_drawing_complete(view)
 
 
   @staticmethod

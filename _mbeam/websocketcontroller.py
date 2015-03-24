@@ -28,6 +28,17 @@ class WebSocketController(object):
 
       self._websocket.send(json.dumps(output))
 
+  def send_refresh(self, data_path):
+    '''
+    This signals a refresh of the current view identified by the data_path.
+    '''
+    if self._websocket:
+      output = {}
+      output['name'] = 'REFRESH'
+      output['origin'] = 'SERVER'
+      output['value'] = data_path
+
+      self._websocket.send(json.dumps(output))
 
   def on_message(self, message):
     '''

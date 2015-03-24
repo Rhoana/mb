@@ -129,7 +129,7 @@ class Manager(object):
 
       #
       # and now we create a view from it
-      view = View.create([fov], fov._width / 4, fov._height / 4, fov._tx / 4, fov._ty / 4)
+      view = View.create(data_path, [fov], fov._width / 4, fov._height / 4, fov._tx / 4, fov._ty / 4)
 
       views.append(view)
 
@@ -142,7 +142,7 @@ class Manager(object):
       # and now we create a view from it
       # view = View.from_Section(section, 4)
       # print 'txty sec', section._tx, section._ty
-      view = View.create(section._fovs, section._width / 4, section._height / 4, section._tx / 4, section._ty / 4)
+      view = View.create(data_path, section._fovs, section._width / 4, section._height / 4, section._tx / 4, section._ty / 4)
 
       views.append(view)
 
@@ -212,6 +212,13 @@ class Manager(object):
     # print image, image.shape
 
     return cv2.imencode('.jpg', image[y*ts:y*ts+ts,x*ts:x*ts+ts])[1].tostring()
+
+
+  def on_drawing_complete(self, view):
+    '''
+    This gets called from the drawer once a single FoV has been added to the view canvas.
+    '''
+    self._websocket_controller.send_refresh(view._data_path)
 
 
   def tick(self):

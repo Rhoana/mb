@@ -14,9 +14,17 @@ D.controller.prototype.on_message = function(message) {
 
   // check message type
   if (message['name'] == 'NEW_DATA') {
+    
     this.update_tree(message['value']);
+
   } else if (message['name'] == 'CONTENT') {
+    
     this.parse_contents(message['value']);
+
+  } else if (message['name'] == 'REFRESH') {
+
+    this.refresh(message['value']);
+
   }
 
 };
@@ -41,6 +49,17 @@ D.controller.prototype.request_content = function() {
   output['value'] = this._data;
  
   this._manager._websocket.send(output);
+
+};
+
+D.controller.prototype.refresh = function(data_path) {
+
+  if (this._data == data_path) {
+    // yep, we should refresh
+
+    this._manager.refresh_viewer();
+    
+  }
 
 };
 
