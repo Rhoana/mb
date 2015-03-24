@@ -64,5 +64,5 @@ class Image(object):
     # right now we have something like this
     # ['021_000001_003_2015-01-14T1653216213670.bmp', '2189614.003', '1853228.961', '0']
     image = Image(values[0], float(values[1]), float(values[2]), float(values[3]))
-
+    # print values
     return image

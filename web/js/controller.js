@@ -23,6 +23,8 @@ D.controller.prototype.on_message = function(message) {
 
 D.controller.prototype.parse_contents = function(contents) {
 
+  console.log('Content:', contents);
+  
   this._manager.setup_viewer(contents);
 
 };

@@ -9,6 +9,7 @@ class FoV(object):
 
   IMAGE_COORDINATES_FILE = 'image_coordinates.txt'
   METADATA_FILE = 'metadata.txt'  
+  THUMBNAIL_RATIO = 4
 
   def __init__(self, directory, metadata, images):
     '''
@@ -62,6 +63,7 @@ class FoV(object):
 
     self._tx = minX
     self._ty = minY
+
     self._width = width
     self._height = height
 
@@ -70,7 +72,7 @@ class FoV(object):
     '''
     '''
     # TODO calculate ratio between one image and its' thumbnail, right now we assume 4
-    ratio = 4*(level+1)
+    ratio = FoV.THUMBNAIL_RATIO*(level+1)
 
     width = self._width / ratio
     height = self._height / ratio

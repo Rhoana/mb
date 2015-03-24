@@ -102,7 +102,12 @@ class WebServer:
     path = '/'.join(splitted_request[2:-1])
     tile = splitted_request[-1].split('-')
 
-    content = self._manager.get_image(path, int(tile[1]), int(tile[2]), int(tile[3]), int(tile[0]))
+    x = int(tile[1])
+    y = int(tile[2])
+    z = int(tile[3])
+    w = int(tile[0])
+
+    content = self._manager.get_image(path, x, y, z, w)
     content_type = 'image/jpeg'
     # TODO
 
@@ -113,6 +118,9 @@ class WebServer:
       content = 'Error 404'
       content_type = 'text/html'
 
+    handler.set_header('Cache-Control','no-cache, no-store, must-revalidate')
+    handler.set_header('Pragma','no-cache')
+    handler.set_header('Expires','0')
     handler.set_header('Access-Control-Allow-Origin', '*')
     handler.set_header('Content-Type', content_type)
     handler.write(content)
