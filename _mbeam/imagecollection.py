@@ -2,16 +2,15 @@ import cv2
 import math
 import numpy as np
 
+from constants import Constants
 from imagedata import ImageData
 
 class ImageCollection(object):
 
-  PYRAMID_MIN_SIZE = 256
-
   def __init__(self, pixels):
     '''
     '''
-    self._levels = range(int(math.log(pixels.shape[1]/ImageCollection.PYRAMID_MIN_SIZE,2)) + 1)
+    self._levels = range(int(math.log(pixels.shape[1]/Constants.PYRAMID_MIN_SIZE,2)) + 1)
     self._levels[0] = ImageData(pixels)
 
   @property

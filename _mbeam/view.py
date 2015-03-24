@@ -5,12 +5,13 @@ from constants import Constants
 
 class View(object):
 
-  def __init__(self, data_path, canvases, fovs):
+  def __init__(self, data_path, canvases, fovs, ratio=1):
     '''
     '''
     self._data_path = data_path
     self._canvases = canvases
     self._fovs = fovs
+    self._ratio = ratio
 
   @property
   def canvases(self):
@@ -31,14 +32,14 @@ class View(object):
     '''
     '''
 
-    zoomlevels = range(int(math.log(width / Constants.PYRAMID_MIN_SIZE, 2)) + 1)
+    zoomlevels = range(int(math.log(width / ratio / Constants.PYRAMID_MIN_SIZE, 2)) + 1)
 
     canvases = []
 
-    w_width = width
-    w_height = height
-    w_tx = tx
-    w_ty = ty
+    w_width = width / ratio
+    w_height = height / ratio
+    w_tx = tx / ratio
+    w_ty = ty / ratio
 
     for w in zoomlevels:
 
@@ -51,7 +52,7 @@ class View(object):
     #
     # create a new View
     #
-    return View(data_path, canvases, fovs)
+    return View(data_path, canvases, fovs, ratio)
     
 
 

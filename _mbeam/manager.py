@@ -6,6 +6,7 @@ import time
 
 
 from canvas import Canvas
+from constants import Constants
 from drawer import Drawer
 from fov import FoV
 from section import Section
@@ -13,14 +14,6 @@ from view import View
 from websocketcontroller import WebSocketController
 
 class Manager(object):
-
-  FOLDER_RESTING_TIME = 3
-  CLIENT_TILE_SIZE = 512
-  PYRAMID_MIN_SIZE = 256
-  THUMBNAIL_RATIO = 4
-  IMAGE_COORDINATES_FILE = 'image_coordinates.txt'
-  FULL_IMAGE_COORDINATES_FILE = 'full_image_coordinates.txt'
-
 
   def __init__(self, directory):
     '''
@@ -69,7 +62,7 @@ class Manager(object):
 
         seconds_since_modified = time.time() - os.path.getmtime(folder_path)
 
-        if seconds_since_modified < Manager.FOLDER_RESTING_TIME:
+        if seconds_since_modified < Constants.FOLDER_RESTING_TIME:
           # this folder shall not be indexed yet
           # we need to jump out
           return False
@@ -100,7 +93,7 @@ class Manager(object):
 
     level = 0
     for root, dirs, files in os.walk(data_path):
-      if Manager.IMAGE_COORDINATES_FILE in files:
+      if Constants.IMAGE_COORDINATES_FILE in files:
         if level == 0:
           # this is a FoV
           return 'FOV'
@@ -125,24 +118,24 @@ class Manager(object):
     # detect if this is a scan, section or fov
     if self.check_path_type(os.path.join(self._directory, data_path)) == 'FOV':
       # this is a FoV
-      fov = FoV.from_directory(os.path.join(self._directory, data_path))
+      fov = FoV.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
 
       #
       # and now we create a view from it
-      view = View.create(data_path, [fov], fov._width / 4, fov._height / 4, fov._tx / 4, fov._ty / 4)
+      view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty, Constants.IMAGE_RATIO)
 
       views.append(view)
 
 
     elif self.check_path_type(os.path.join(self._directory, data_path)) == 'SECTION':
 
-      section = Section.from_directory(os.path.join(self._directory, data_path))
+      section = Section.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
 
       #
       # and now we create a view from it
       # view = View.from_Section(section, 4)
       # print 'txty sec', section._tx, section._ty
-      view = View.create(data_path, section._fovs, section._width / 4, section._height / 4, section._tx / 4, section._ty / 4)
+      view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
 
       views.append(view)
 
@@ -186,7 +179,7 @@ class Manager(object):
       view_descriptor['layer'] = j
       view_descriptor['minLevel'] = 0#zoomlevels[0]
       view_descriptor['maxLevel'] = maxLevel#zoomlevels[-1]
-      view_descriptor['tileSize'] = Manager.CLIENT_TILE_SIZE
+      view_descriptor['tileSize'] = Constants.CLIENT_TILE_SIZE
       view_descriptors.append(view_descriptor)
 
       #
@@ -208,7 +201,7 @@ class Manager(object):
     '''
 
     image = self._views[data_path].canvases[w].pixels
-    ts = Manager.CLIENT_TILE_SIZE
+    ts = Constants.CLIENT_TILE_SIZE
     # print image, image.shape
 
     return cv2.imencode('.jpg', image[y*ts:y*ts+ts,x*ts:x*ts+ts])[1].tostring()

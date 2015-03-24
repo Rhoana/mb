@@ -12,18 +12,18 @@ class Drawer(Worker):
     # first we need to load and stitch the FoV
     #
     for fov in fovs:
-      if not fov._thumbnail:
-        fov.load_and_stitch_thumbnails()
+      if not fov._imagedata:
+        fov.load_and_stitch(view._ratio)
 
       #
       # then, we place the fov pixels on our canvases
       #
-      for w in range(len(fov._thumbnail._levels)):
+      for w in range(len(fov._imagedata._levels)):
         canvas = canvases[w]
 
-        pixels = fov._thumbnail._levels[w]._pixels
+        pixels = fov._imagedata._levels[w]._pixels
 
-        canvas.place_pixels(pixels, (fov._tx / 4) / 2**w, (fov._ty / 4) / 2**w)
+        canvas.place_pixels(pixels, (fov._tx / view._ratio) / 2**w, (fov._ty / view._ratio) / 2**w)
 
 
       # notify the manager for each FoV

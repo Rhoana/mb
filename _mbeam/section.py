@@ -92,45 +92,45 @@ class Section(object):
     # print 'bb',self._width, self._height, self._tx, self._ty
 
 
-  def create_thumbnail(self):
-    '''
-    Create the empty thumbnail representation.
-    '''
-    ratio = FoV.THUMBNAIL_RATIO
+  # def create_thumbnail(self):
+  #   '''
+  #   Create the empty thumbnail representation.
+  #   '''
+  #   ratio = FoV.THUMBNAIL_RATIO
 
-    width = self._width / ratio
-    height = self._height / ratio    
+  #   width = self._width / ratio
+  #   height = self._height / ratio    
 
-    thumbnail = ImageCollection((height, width), dtype=np.uint8)
-    thumbnail.create_full_pyramid()
+  #   thumbnail = ImageCollection((height, width), dtype=np.uint8)
+  #   thumbnail.create_full_pyramid()
 
-    self._thumbnail = thumbnail
+  #   self._thumbnail = thumbnail
 
 
-  def stitch_thumbnails(self, level=0):
-    '''
-    '''
-    # TODO calculate ratio between one image and its' thumbnail, right now we assume 4
-    ratio = FoV.THUMBNAIL_RATIO*(level+1)
+  # def stitch_thumbnails(self, level=0):
+  #   '''
+  #   '''
+  #   # TODO calculate ratio between one image and its' thumbnail, right now we assume 4
+  #   ratio = FoV.THUMBNAIL_RATIO*(level+1)
 
-    width = self._width / ratio
-    height = self._height / ratio
+  #   width = self._width / ratio
+  #   height = self._height / ratio
 
-    out = np.zeros((height, width), dtype=np.uint8)
+  #   out = np.zeros((height, width), dtype=np.uint8)
 
-    for i in self._images:
+  #   for i in self._images:
 
-      image = self._images[i]
-      x = (image._tx - self._tx) / ratio
-      y = (image._ty - self._ty) / ratio
+  #     image = self._images[i]
+  #     x = (image._tx - self._tx) / ratio
+  #     y = (image._ty - self._ty) / ratio
 
-      thumb = image._thumbnail.levels[level].pixels
-      out[y:y+thumb.shape[0],x:x+thumb.shape[1]] = thumb
+  #     thumb = image._thumbnail.levels[level].pixels
+  #     out[y:y+thumb.shape[0],x:x+thumb.shape[1]] = thumb
 
-    return ImageCollection(out)
+  #   return ImageCollection(out)
 
   @staticmethod
-  def from_directory(directory):
+  def from_directory(directory, file_prefix='', ratio=1):
     '''
     Loads a section from a directory without loading any images.
 
@@ -147,7 +147,7 @@ class Section(object):
         # fovs always reside in directories
         continue
 
-      fov = FoV.from_directory(fov_path)
+      fov = FoV.from_directory(fov_path, file_prefix, ratio)
       fovs.append(fov)
 
     section = Section(directory, fovs)
