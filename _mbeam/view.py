@@ -31,8 +31,8 @@ class View(object):
   def create(data_path, fovs, width, height, tx, ty, ratio=1):
     '''
     '''
-    
-    zoomlevels = range(int(math.log(width / ratio / Constants.PYRAMID_MIN_SIZE, 2)) + 1)
+
+    zoomlevels = range(int(math.log(fovs[0]._width / ratio / Constants.PYRAMID_MIN_SIZE, 2)) + 1)
 
     canvases = []
 
