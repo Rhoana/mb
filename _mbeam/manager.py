@@ -9,6 +9,7 @@ from canvas import Canvas
 from constants import Constants
 from drawer import Drawer
 from fov import FoV
+from scan import Scan
 from section import Section
 from view import View
 from websocketcontroller import WebSocketController
@@ -93,6 +94,7 @@ class Manager(object):
 
     level = 0
     for root, dirs, files in os.walk(data_path):
+
       if Constants.IMAGE_COORDINATES_FILE in files:
         if level == 0:
           # this is a FoV
@@ -113,7 +115,6 @@ class Manager(object):
     '''
 
     views = []
-
 
     # detect if this is a scan, section or fov
     if self.check_path_type(os.path.join(self._directory, data_path)) == 'FOV':
@@ -139,24 +140,16 @@ class Manager(object):
 
       views.append(view)
 
-    #   # fovs = []
 
-    #   for f in section._fovs:
+    elif self.check_path_type(os.path.join(self._directory, data_path)) == 'SCAN':
 
-    #     fov_path = os.path.join(data_path, f.id)
+      scan = Scan.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
 
+      for section in scan._sections:
 
-    #     self._fovs[fov_path] = f
-    #     # fovs.append(fov)
+        view = View.create(os.path.join(data_path, section.id), section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
 
-    #   canvases.append((section._width, section._height))
-
-    # elif self.check_path_type(os.path.join(self._directory, data_path)) == 'SCAN':
-      
-    #   print 'scan'
-
-
-
+        views.append(view)
     
     
     view_descriptors = []
@@ -174,6 +167,7 @@ class Manager(object):
       # zoomlevels = range(int(math.log(width / Manager.THUMBNAIL_RATIO / Manager.PYRAMID_MIN_SIZE,2)) + 1)
 
       view_descriptor = {}
+      view_descriptor['data_path'] = view._data_path
       view_descriptor['width'] = width #/ Manager.THUMBNAIL_RATIO
       view_descriptor['height'] = height #/ Manager.THUMBNAIL_RATIO
       view_descriptor['layer'] = j
@@ -186,12 +180,12 @@ class Manager(object):
       # HERE, WE ADD THE VIEW TO OUR QUEUE
       # BUT ONLY IF WE DO NOT HAVE THIS VIEW YET
       #
-      if not data_path in self._views:
+      if not view._data_path in self._views:
         self._viewing_queue.append(view)
         #
         # and to our views dictionary
         #
-        self._views[data_path] = view
+        self._views[view._data_path] = view
 
     return view_descriptors
 
@@ -199,7 +193,7 @@ class Manager(object):
   def get_image(self, data_path, x, y, z, w):
     '''
     '''
-
+    # print data_path
     image = self._views[data_path].canvases[w].pixels
     ts = Constants.CLIENT_TILE_SIZE
     # print image, image.shape

@@ -36,6 +36,8 @@ D.manager.prototype.update_tree = function(data) {
 
 D.manager.prototype.setup_viewer = function(content) {
 
+  content2 = content;
+
   for (var i=0; i<content.length; i++) {
 
     var that = this;
@@ -59,7 +61,7 @@ D.manager.prototype.setup_viewer = function(content) {
 
       // TODO fragile with passing the data
 
-      return "/data/" + that._controller._data + '/' + level + "-" + x + "-" + y + "-" + this.layer + '-' + Math.random();// + '-'+image_top_left_x+'-'+image_top_left_y+'-'+image_bottom_right_x+'-'+image_bottom_right_y;
+      return "/data/" + this.data_path + '/' + level + "-" + x + "-" + y + "-" + this.layer;// + '-' + Math.random();// + '-'+image_top_left_x+'-'+image_top_left_y+'-'+image_bottom_right_x+'-'+image_bottom_right_y;
     
     }
 
@@ -70,8 +72,19 @@ D.manager.prototype.setup_viewer = function(content) {
     prefixUrl:     "images/",
     navigatorSizeRatio: 0.25,
     preserveViewport: true,
+    sequenceMode:   true,
     tileSources:   content
   });
+
+  // we need to monitor page changes to update our data path
+  this._viewer.addHandler('page', function(event) {
+
+    this._controller._data = content[event.page].data_path;
+
+  }.bind(this));
+
+  // update data_path in the controller
+  this._controller._data = content[0].data_path;
 
 };
 
