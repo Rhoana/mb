@@ -32,6 +32,10 @@ class Manager(object):
     self._views = {}
 
 
+    self._no_workers = 3#mp.cpu_count() - 1
+    self._active_workers = mp.Queue(self._no_workers)
+
+
   def start(self):
     '''
     '''
@@ -201,16 +205,33 @@ class Manager(object):
     return cv2.imencode('.jpg', image[y*ts:y*ts+ts,x*ts:x*ts+ts])[1].tostring()
 
 
-  def on_drawing_complete(self, view):
+  def on_drawing_fov_complete(self, view):
     '''
     This gets called from the drawer once a single FoV has been added to the view canvas.
     '''
     self._websocket_controller.send_refresh(view._data_path)
 
 
+  def on_drawing_view_complete(self, view):
+    '''
+    This gets called once the drawer finished a complete view canvas.
+    '''
+    self._active_workers.get() # reduce worker counter
+
+
   def tick(self):
     '''
     '''
+
+    #
+    # check for new data in the filesystem
+    #
+    self.index()
+
+
+    # do nothing more while workers are not available
+    if self._active_workers.full():
+      return    
 
     if len(self._viewing_queue) != 0:
       view = self._viewing_queue.pop(0)
@@ -218,14 +239,11 @@ class Manager(object):
       # we now use a separate process to work on this view
       args = (self, view)
       worker = mp.Process(target=Drawer.run, args=args)
-      # self._active_workers.put(1) # increase worker counter
+      self._active_workers.put(1) # increase worker counter
       print 'starting drawer', view
       worker.start()
 
 
-    #
-    # check for new data in the filesystem
-    #
-    self.index()
+
 
 

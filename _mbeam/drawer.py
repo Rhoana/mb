@@ -27,8 +27,11 @@ class Drawer(Worker):
 
 
       # notify the manager for each FoV
-      manager.on_drawing_complete(view)
+      manager.on_drawing_fov_complete(view)
 
+
+    # notify the manager that we are all done with this view
+    manager.on_drawing_view_complete(view)
 
   @staticmethod
   def run(manager, view):
