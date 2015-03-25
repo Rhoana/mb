@@ -5,6 +5,7 @@ import time
 import uuid
 
 from cache import CACHE
+from constants import Constants
 from worker import Worker
 
 class Canvas(object):
@@ -15,8 +16,12 @@ class Canvas(object):
     self._width = int(width) + 1
     self._height = int(height) + 1
     self._memory = mp.RawArray(ctypes.c_ubyte, self._width*self._height)
-
     self._pixels = Worker.shmem_as_ndarray(self._memory)
+
+    if Constants.INVERT:
+      self._pixels[:] = 255
+
+    
     self._tx = tx
     self._ty = ty
 

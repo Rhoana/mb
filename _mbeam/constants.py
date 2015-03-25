@@ -8,3 +8,4 @@ class Constants(object):
   METADATA_FILE = 'metadata.txt'  
   IMAGE_PREFIX = 'thumbnail_'
   IMAGE_RATIO = 4
+  INVERT = True

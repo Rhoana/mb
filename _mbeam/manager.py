@@ -201,8 +201,10 @@ class Manager(object):
     image = self._views[data_path].canvases[w].pixels
     ts = Constants.CLIENT_TILE_SIZE
     # print image, image.shape
-
-    return cv2.imencode('.jpg', image[y*ts:y*ts+ts,x*ts:x*ts+ts])[1].tostring()
+    tile = image[y*ts:y*ts+ts,x*ts:x*ts+ts]
+    if Constants.INVERT:
+      tile = (255-tile)
+    return cv2.imencode('.jpg', tile)[1].tostring()
 
 
   def on_drawing_fov_complete(self, view):
