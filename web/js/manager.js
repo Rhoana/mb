@@ -7,6 +7,8 @@ D.manager = function() {
 
   this._viewer = null;
 
+  this._contrast = 10;
+
   this.init();
 
 };
@@ -23,6 +25,30 @@ D.manager.prototype.init = function() {
 
   this._websocket = new D.websocket(this);
 
+  this.setup_controls();
+
+};
+
+D.manager.prototype.setup_controls = function() {
+
+  $("#contrast").slider({
+    range: "min",
+    min: 10,
+    max: 100,
+    value: 10,
+    slide: function(e, ui) {
+      // $("#c_currentVal").html(ui.value);
+      MANAGER._contrast = ui.value;
+      MANAGER.update_parameters();
+    }
+  });
+
+};
+
+D.manager.prototype.update_parameters = function() {
+
+  $(MANAGER._viewer.canvas.children[0]).css('webkit-filter','contrast('+(this._contrast)/10+')');
+
 };
 
 D.manager.prototype.update_tree = function(data) {
@@ -35,8 +61,6 @@ D.manager.prototype.update_tree = function(data) {
 };
 
 D.manager.prototype.setup_viewer = function(content) {
-
-  content2 = content;
 
   for (var i=0; i<content.length; i++) {
 
