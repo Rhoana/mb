@@ -5,6 +5,7 @@ import os
 import time
 
 
+from cache import CACHE
 from canvas import Canvas
 from constants import Constants
 from drawer import Drawer
@@ -229,6 +230,16 @@ class Manager(object):
     #
     self.index()
 
+    #
+    # loop through cache
+    #
+    for canvas in CACHE:
+      canvas = CACHE[canvas]
+      delta = time.time() - canvas._last_used
+      if (delta >= Constants.CACHE_RESTING_TIME):
+        # we should free it here
+        canvas.free()
+
 
     # do nothing more while workers are not available
     if self._active_workers.full():
@@ -246,5 +257,5 @@ class Manager(object):
 
 
 
-
+    
 

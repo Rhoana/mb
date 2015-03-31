@@ -1,6 +1,8 @@
 import ctypes
 import multiprocessing as mp
 import numpy as np
+import os
+import tempfile
 import time
 import uuid
 
@@ -30,6 +32,8 @@ class Canvas(object):
     self._last_used = time.time()
     CACHE[self._id] = self # here we store a pointer to the cache
 
+    self._file = None
+
 
   def place_pixels(self, pixels, tx=0, ty=0):
     '''
@@ -47,12 +51,51 @@ class Canvas(object):
     pixels_subarray[mask] = pixels[mask]
 
 
+  def free(self):
+    '''
+    Store the pixels to disk. Delete the memory and pixels pointers.
+    '''
+    # do nothing if we are already freed
+    if not self._memory:
+      return
+
+    # print 'Freeing', self._id
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+      self._file = f.name
+      np.save(f, self._pixels)
+
+    self._memory = None
+    self._pixels = None
+
+
+  def reload(self):
+    '''
+    Reload the pixels from disk.
+    '''
+    # print 'Reloading', self._id
+    with open(self._file, "rb") as f:
+      pixels = np.load(f)
+
+    # delete the temp file
+    os.unlink(self._file)
+
+    # allocate memory
+    self._memory = mp.RawArray(ctypes.c_ubyte, self._width*self._height)
+    self._pixels = Worker.shmem_as_ndarray(self._memory)
+
+    # fill in the pixels to the memory
+    self._pixels[:] = pixels
+
+    self._file = None
+
 
   @property
   def pixels(self):
 
     # here we check if we have the data in memory,
     # else re-load from disk cache
+    if not self._memory:
+      self.reload()
 
     self._last_used = time.time()
 

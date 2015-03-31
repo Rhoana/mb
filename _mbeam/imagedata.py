@@ -14,7 +14,7 @@ class ImageData(object):
     uid = uuid.uuid4()
     self._id = uid.hex
     self._last_used = time.time()
-    CACHE[self._id] = self # here we store a pointer to the cache
+    # CACHE[self._id] = self # here we store a pointer to the cache
 
   @property
   def pixels(self):
