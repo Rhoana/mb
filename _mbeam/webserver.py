@@ -64,17 +64,18 @@ class WebServerHandler(tornado.web.RequestHandler):
 
 class WebServer:
 
-  def __init__( self, manager ):
+  def __init__( self, manager, port=2001 ):
     '''
     '''
     self._manager = manager
+    self._port = port
 
   def start( self ):
     '''
     '''
 
     ip = socket.gethostbyname('')
-    port = 2001
+    port = self._port
 
     webapp = tornado.web.Application([
 

@@ -31,7 +31,6 @@ class Manager(object):
     # self._sections = {}
     self._views = {}
 
-
     self._no_workers = 3#mp.cpu_count() - 1
     self._active_workers = mp.Queue(self._no_workers)
 

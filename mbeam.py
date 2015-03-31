@@ -13,7 +13,7 @@ def print_help( script_name ):
   description = ''
   print description
   print
-  print 'Usage: ' + script_name + ' INPUT_DIRECTORY'
+  print 'Usage: ' + script_name + ' INPUT_DIRECTORY PORT'
   print
 
 
@@ -28,9 +28,12 @@ if __name__ == "__main__":
     sys.exit( 1 )
 
   input_dir = sys.argv[1]
+  port = 2001
+  if len(sys.argv) == 3:
+    port = sys.argv[2]
 
   manager = _mbeam.Manager(input_dir)
   manager.start()
 
-  webserver = _mbeam.WebServer(manager)
+  webserver = _mbeam.WebServer(manager, port)
   webserver.start()
