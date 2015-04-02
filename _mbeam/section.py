@@ -56,10 +56,14 @@ class Section(object):
       minX = min(minX, offset_x)
       minY = min(minY, offset_y)
 
+    for f in self._fovs:
 
-      width = max(width, f._width+offset_x)
-      height = max(height, f._height+offset_y)
+      offset_x = f._tx
+      offset_y = f._ty
 
+      width = max(width, f._width+offset_x-minX)
+      height = max(height, f._height+offset_y-minY)
+      # print 'new w,h', width, height
 
 
       # width = max(width, f._tx + f._width - minX)
@@ -70,11 +74,12 @@ class Section(object):
       # minX = min(minX, f._tx)
       # minY = min(minY, f._ty)
 
-    #   # print 'minX', minX, minY
+      # print 'minX', minX, minY
 
     #   origin = [minX, minY]
-    #   translated_fov_origin = [f._tx - minX, f._ty - minY]
-    #   print 'translated_fov_origin', translated_fov_origin
+      # translated_fov_origin = [f._tx - minX, f._ty - minY]
+      # print 'translated_fov_origin', translated_fov_origin
+      # print '-'*80
     #   translated_fov_width = [translated_fov_origin[0] + f._width, translated_fov_origin[1] + f._height]
     #   print 'translated_fov_width', translated_fov_width
 
@@ -83,8 +88,8 @@ class Section(object):
 
     
 
-    self._width = width - minX
-    self._height = height - minY
+    self._width = width #- minX
+    self._height = height #- minY
     self._tx = minX
     self._ty = minY
 
