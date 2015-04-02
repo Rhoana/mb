@@ -17,8 +17,13 @@ class Canvas(object):
     '''
     self._width = int(width) + 1
     self._height = int(height) + 1
-    self._memory = mp.RawArray(ctypes.c_ubyte, self._width*self._height)
-    self._pixels = Worker.shmem_as_ndarray(self._memory)
+    print 'Allocating', self._width*self._height, bytes
+    try:
+        self._memory = mp.RawArray(ctypes.c_ubyte, self._width*self._height)
+        self._pixels = Worker.shmem_as_ndarray(self._memory)
+
+    except Error as e:
+        print 'Out of memory. :('
 
     if Constants.INVERT:
       self._pixels[:] = 255
