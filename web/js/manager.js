@@ -85,7 +85,7 @@ D.manager.prototype.setup_viewer = function(content) {
 
       // TODO fragile with passing the data
 
-      return "/data/" + this.data_path + '/' + level + "-" + x + "-" + y + "-" + this.layer;// + '-' + Math.random();// + '-'+image_top_left_x+'-'+image_top_left_y+'-'+image_bottom_right_x+'-'+image_bottom_right_y;
+      return "data/" + this.data_path + '/' + level + "-" + x + "-" + y + "-" + this.layer;// + '-' + Math.random();// + '-'+image_top_left_x+'-'+image_top_left_y+'-'+image_bottom_right_x+'-'+image_bottom_right_y;
     
     }
 

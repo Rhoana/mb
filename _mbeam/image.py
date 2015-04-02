@@ -41,7 +41,7 @@ class Image(object):
   def load(self, directory, file_prefix='', ratio=1):
     '''
     '''
-    imagedata = cv2.imread(os.path.join(directory, file_prefix + self._filename), cv2.CV_LOAD_IMAGE_GRAYSCALE)
+    imagedata = cv2.imread(os.path.join(directory, file_prefix + self._filename), 0) # this is grayscale loading with any OpenCV version
 
     self._imagedata = ImageCollection(imagedata[0:self.height/ratio, 0:self.width/ratio])
 

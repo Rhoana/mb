@@ -24,6 +24,11 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
     self._controller.handshake(self)
 
+  def check_origin(self, origin):
+    '''
+    '''
+    return True
+
   def on_close(self):
     '''
     '''
@@ -82,7 +87,7 @@ class WebServer:
       (r'/ws', WebSocketHandler, dict(manager=self._manager)),
       
       (r'/data/(.*)', WebServerHandler, dict(webserver=self)),
-      (r'/(.*)', tornado.web.StaticFileHandler, dict(path=os.path.join(os.path.dirname(__file__),'../web')))
+      (r'/(.*)', tornado.web.StaticFileHandler, dict(path=os.path.join(os.path.dirname(__file__),'../web'), default_filename='index.html'))
   
     ])
 

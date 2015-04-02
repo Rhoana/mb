@@ -228,7 +228,7 @@ class Manager(object):
     #
     # check for new data in the filesystem
     #
-    self.index()
+    # self.index() ### do not index all the time for now
 
     #
     # loop through cache

@@ -16,7 +16,12 @@ D.websocket.prototype.connect = function() {
 
   try {
 
-    var host = "ws://"+window.location.hostname+":"+window.location.port+"/ws";  
+    var hostname = window.location.hostname;
+    var port = window.location.port;
+    var path = window.location.pathname;
+    var path_without_file = path.substring(0, path.lastIndexOf('/') + 1);
+    var host = "ws://"+hostname+":"+port+path_without_file+"ws";
+
     this._socket = new WebSocket(host);
     this._socket.binaryType = 'arraybuffer';
     this._socket.onopen = this.on_open.bind(this);
