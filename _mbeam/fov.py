@@ -3,8 +3,7 @@ import os
 import sys
 
 from constants import Constants
-from image import Image
-from imagecollection import ImageCollection
+from tile import Tile
 
 class FoV(object):
 
@@ -13,7 +12,7 @@ class FoV(object):
     '''
     self._directory = directory
     self._metadata = metadata
-    self._images = images
+    self._tiles = images
     self._file_prefix = file_prefix
     self._ratio = ratio
 
@@ -29,7 +28,7 @@ class FoV(object):
   def __str__(self):
     '''
     '''
-    return 'FoV ' + self.id + ' with ' + str(len(self._images)) + ' images.'
+    return 'FoV ' + self.id + ' with ' + str(len(self._tiles)) + ' tiles.'
 
 
   @property
@@ -49,8 +48,8 @@ class FoV(object):
     maxX = -sys.maxint
     maxY = -sys.maxint
 
-    for i in self._images:
-      image = self._images[i]
+    for i in self._tiles:
+      image = self._tiles[i]
       minX = min(minX, image._tx)
       minY = min(minY, image._ty)
       maxX = max(maxX, image._tx + image.width)
@@ -66,46 +65,47 @@ class FoV(object):
     self._height = height
 
 
-  def stitch(self, level=0, ratio=1):
-    '''
-    '''
-    # TODO calculate ratio between one image and its' thumbnail, right now we assume 4
-    ratio = ratio*(level+1)
+  # def stitch(self, level=0, ratio=1):
+  #   '''
+  #   '''
+  #   # TODO calculate ratio between one image and its' thumbnail, right now we assume 4
+  #   ratio = ratio*(level+1)
 
-    width = self._width / ratio
-    height = self._height / ratio
+  #   width = self._width / ratio
+  #   height = self._height / ratio
 
-    # print 'FOV',height, width, ratio
+  #   # print 'FOV',height, width, ratio
 
-    out = np.zeros((height, width), dtype=np.uint8)
+  #   out = np.zeros((height, width), dtype=np.uint8)
 
-    for i in self._images:
+  #   for i in self._images:
 
-      image = self._images[i]
-      x = (image._tx - self._tx) / ratio
-      y = (image._ty - self._ty) / ratio
+  #     image = self._images[i]
+  #     x = (image._tx - self._tx) / ratio
+  #     y = (image._ty - self._ty) / ratio
 
-      image = image._imagedata.levels[level].pixels
-      # print image.shape
-      out[y:y+image.shape[0],x:x+image.shape[1]] = image
+  #     image = image._imagedata.levels[level].pixels
+  #     # print image.shape
+  #     out[y:y+image.shape[0],x:x+image.shape[1]] = image
 
-    return ImageCollection(out)
+  #   return ImageCollection(out)
 
 
-  def load_and_stitch(self, ratio=1):
-    '''
-    '''
-    # first load the thumbnails from disk
-    for i in self._images:
-      image = self._images[i]
-      image.load(self._directory, self._file_prefix, self._ratio)
-      # image.load(self._directory)
+  # def load_and_stitch(self, ratio=1):
+  #   '''
+  #   '''
+  #   print 'Loading all images'
+  #   # first load the thumbnails from disk
+  #   for i in self._images:
+  #     image = self._images[i]
+  #     image.load(self._directory, self._file_prefix, self._ratio)
+  #     # image.load(self._directory)
 
-    # now create the pyramid
-    stitched = self.stitch(ratio=ratio)
-    stitched.create_full_pyramid()
+  #   # now create the pyramid
+  #   stitched = self.stitch(ratio=ratio)
+  #   stitched.create_full_pyramid()
 
-    self._imagedata = stitched
+  #   self._imagedata = stitched
 
 
   @staticmethod
@@ -144,20 +144,20 @@ class FoV(object):
     height = int(metadata['Height'].strip('px'))
     
     #
-    # index images
+    # index tiles
     #
-    images = {}
+    tiles = {}
 
     with open(image_coordinates_file) as f:
       for l in f.readlines():
-        image = Image.from_string(l)
+        tile = Tile.from_string(l)
         # update width and height
-        image.width = width
-        image.height = height
-        images[image.id] = image
+        tile.width = width
+        tile.height = height
+        tiles[tile.id] = tile
         #image.load_thumbnail(directory) # load the small representation
         
 
 
-    fov = FoV(directory, metadata, images, file_prefix, ratio)
+    fov = FoV(directory, metadata, tiles, file_prefix, ratio)
     return fov

@@ -3,7 +3,7 @@ import os
 
 from imagecollection import ImageCollection
 
-class Image(object):
+class Tile(object):
 
   def __init__(self, filename, tx=-1, ty=-1, tz=-1):
     '''
@@ -41,11 +41,22 @@ class Image(object):
   def load(self, directory, file_prefix='', ratio=1):
     '''
     '''
+    # print 'LOADING',os.path.join(directory, file_prefix + self._filename) 
+
     imagedata = cv2.imread(os.path.join(directory, file_prefix + self._filename), 0) # this is grayscale loading with any OpenCV version
 
-    print imagedata
+
+    # if not imagedata:
+    #   print 'AAAAAAA', os.path.join(directory, file_prefix + self._filename)
+
 
     self._imagedata = imagedata[0:self.height/ratio, 0:self.width/ratio]
+
+  def downsample(self, factor):
+    '''
+    '''
+    factor = 1./factor
+    return cv2.resize(self._imagedata, (0,0), fx=factor, fy=factor, interpolation=cv2.INTER_LINEAR)
 
   @staticmethod
   def from_string(string, delimiter='\t'):
@@ -58,6 +69,6 @@ class Image(object):
 
     # right now we have something like this
     # ['021_000001_003_2015-01-14T1653216213670.bmp', '2189614.003', '1853228.961', '0']
-    image = Image(values[0], float(values[1]), float(values[2]), float(values[3]))
+    tile = Tile(values[0], float(values[1]), float(values[2]), float(values[3]))
     # print values
-    return image
+    return tile
