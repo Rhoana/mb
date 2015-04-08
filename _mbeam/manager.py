@@ -40,6 +40,8 @@ class Manager(object):
     self._no_workers = 3#mp.cpu_count() - 1
     self._active_workers = mp.Queue(self._no_workers)
 
+    self._tiles = {}
+
 
   def start(self):
     '''
@@ -220,8 +222,8 @@ class Manager(object):
     # if w<3:
     #   return
 
-    print '-'*80
-    print 'SD', data_path, x, y, z, w
+    # print '-'*80
+    # print 'SD', data_path, x, y, z, w
 
 
     view = self._views[data_path]
@@ -269,14 +271,14 @@ class Manager(object):
     #   # special case, only one fov
     #   file_prefix = os.path.join(file_prefix, '..')
 
-    print 'need', len(required_tiles), 'tiles'
+    # print 'need', len(required_tiles), 'tiles'
 
     stitched = np.zeros((Constants.CLIENT_TILE_SIZE, Constants.CLIENT_TILE_SIZE), dtype=np.uint8)
 
     for t in required_tiles:
 
       tile_dict = required_tiles[t]
-      tile = tile_dict['tile']
+      tile = tile_dict['tile']  
 
       if len(view._fovs) > 1:
         # t_abs_data_path = os.path.join(abs_data_path, '..')
@@ -287,12 +289,21 @@ class Manager(object):
         t_abs_data_path = abs_data_path
 
       # print 'LOADING', os.path.join(t_abs_data_path, tile._filename)
-      tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
-        
-      if w > 0:
+      if t in self._tiles:
+        if w in self._tiles[t]:
+          current_tile = self._tiles[t][w]
+          # print 'CACHE HIT'
+        else:
+          # tile there but not correct zoomlevel
+          tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+          current_tile = tile.downsample(2**w)
+          self._tiles[t][w] = tile._imagedata  
+      else: 
+        tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
         current_tile = tile.downsample(2**w)
-      else:
-        current_tile = tile._imagedata
+        self._tiles[t] = {w:current_tile}
+
+      
 
 
       # stitch it in our little openseadragon tile
@@ -335,8 +346,8 @@ class Manager(object):
 
       # stitched[ty-y_c:ty-y_c+height, tx-x_c:tx-x_c+width] = current_tile[ty:ty+height, tx:tx+width]
 
-      import sys
-      sys.stdout.flush()
+      # import sys
+      # sys.stdout.flush()
 
     return cv2.imencode('.jpg', stitched)[1].tostring()
 

@@ -55,6 +55,9 @@ class Tile(object):
   def downsample(self, factor):
     '''
     '''
+    if factor == 1.:
+      return self._imagedata
+
     factor = 1./factor
     return cv2.resize(self._imagedata, (0,0), fx=factor, fy=factor, interpolation=cv2.INTER_LINEAR)
 
