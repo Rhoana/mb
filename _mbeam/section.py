@@ -153,7 +153,10 @@ class Section(object):
         continue
 
       fov = FoV.from_directory(fov_path, file_prefix, ratio)
-      fovs.append(fov)
+      if fov:
+        fovs.append(fov)
+
+
 
     section = Section(directory, fovs)
     # print section._width, section._height, section._tx, section._ty
