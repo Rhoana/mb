@@ -149,7 +149,9 @@ class FoV(object):
     tiles = {}
 
     with open(image_coordinates_file) as f:
-      for l in f.readlines():
+      for i,l in enumerate(f.readlines()):
+        if i>60:
+          break
         tile = Tile.from_string(l)
         # update width and height
         tile.width = width
