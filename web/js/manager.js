@@ -97,6 +97,7 @@ D.manager.prototype.setup_viewer = function(content) {
     navigatorSizeRatio: 0.25,
     preserveViewport: true,
     sequenceMode:   true,
+    maxZoomPixelRatio: 20,
     tileSources:   content
   });
 
