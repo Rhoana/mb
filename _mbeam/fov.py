@@ -107,6 +107,15 @@ class FoV(object):
 
   #   self._imagedata = stitched
 
+  @staticmethod
+  def filter_duplicate_lines(lines):
+    '''
+    from: http://stackoverflow.com/a/480227/1183453
+    '''
+    seen = set()
+    seen_add = seen.add
+    return [ x for x in lines if not (x in seen or seen_add(x))]    
+
 
   @staticmethod
   def from_directory(directory, file_prefix='', ratio=1):
@@ -149,10 +158,13 @@ class FoV(object):
     tiles = {}
 
     with open(image_coordinates_file) as f:
-      lines = f.readlines()
+      
       # we need to remove duplicate entries here
-      for i,l in enumerate(list(set(lines))):
+      lines = FoV.filter_duplicate_lines(f.readlines())
+      
+      for i,l in enumerate(lines):
         if i>60:
+          # only look at the first 61 entries since we do not use other thumbnails
           break
         tile = Tile.from_string(l)
         # update width and height

@@ -270,6 +270,10 @@ class Manager(object):
 
     stitched = np.zeros((Constants.CLIENT_TILE_SIZE, Constants.CLIENT_TILE_SIZE), dtype=np.uint8)
 
+
+    if Constants.INVERT:
+      stitched[:] = 255
+
     # sort the required tiles to always give priority in the same order
     required_tiles_keys = sorted(required_tiles, key=lambda key: required_tiles[key])
 
@@ -286,20 +290,24 @@ class Manager(object):
       else:
         t_abs_data_path = abs_data_path
 
+      #
+      # NO CACHING FOR NOW
+      #
+
       # print 'LOADING', os.path.join(t_abs_data_path, tile._filename)
-      if t in self._tiles:
-        if w in self._tiles[t]:
-          current_tile = self._tiles[t][w]
-          # print 'CACHE HIT'
-        else:
-          # tile there but not correct zoomlevel
-          tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
-          current_tile = tile.downsample(2**w)
-          self._tiles[t][w] = tile._imagedata  
-      else: 
-        tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
-        current_tile = tile.downsample(2**w)
-        self._tiles[t] = {w:current_tile}
+      # if t in self._tiles:
+      #   if w in self._tiles[t]:
+      #     current_tile = self._tiles[t][w]
+      #     # print 'CACHE HIT'
+      #   else:
+      #     # tile there but not correct zoomlevel
+      #     tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+      #     current_tile = tile.downsample(2**w)
+      #     self._tiles[t][w] = tile._imagedata  
+      # else: 
+      tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+      current_tile = tile.downsample(2**w)
+      # self._tiles[t] = {w:current_tile}
 
       
 
@@ -340,12 +348,16 @@ class Manager(object):
       # print 'stitched_w_h', stitched_w, stitched_h
       # print 'tsub x_y', t_sub_x, t_sub_y
 
+
       stitched[stitched_y:stitched_y+stitched_h, stitched_x:stitched_x+stitched_w] = current_tile[t_sub_y:t_sub_y+t_stitched_h, t_sub_x:t_sub_x+t_stitched_w]
 
       # stitched[ty-y_c:ty-y_c+height, tx-x_c:tx-x_c+width] = current_tile[ty:ty+height, tx:tx+width]
 
       # import sys
       # sys.stdout.flush()
+
+    if Constants.INVERT:
+      stitched = 255-stitched
 
     return cv2.imencode('.jpg', stitched)[1].tostring()
 
