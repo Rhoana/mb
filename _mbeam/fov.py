@@ -149,7 +149,9 @@ class FoV(object):
     tiles = {}
 
     with open(image_coordinates_file) as f:
-      for i,l in enumerate(f.readlines()):
+      lines = f.readlines()
+      # we need to remove duplicate entries here
+      for i,l in enumerate(list(set(lines))):
         if i>60:
           break
         tile = Tile.from_string(l)
