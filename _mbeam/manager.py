@@ -267,15 +267,13 @@ class Manager(object):
         required_tiles[t] = tile_dict
 
     abs_data_path = os.path.join(self._directory, data_path)
-    # if len(view._fovs) == 1:
-    #   # special case, only one fov
-    #   file_prefix = os.path.join(file_prefix, '..')
-
-    # print 'need', len(required_tiles), 'tiles'
 
     stitched = np.zeros((Constants.CLIENT_TILE_SIZE, Constants.CLIENT_TILE_SIZE), dtype=np.uint8)
 
-    for t in required_tiles:
+    # sort the required tiles to always give priority in the same order
+    required_tiles_keys = sorted(required_tiles, key=lambda key: required_tiles[key])
+
+    for t in required_tiles_keys:
 
       tile_dict = required_tiles[t]
       tile = tile_dict['tile']  
