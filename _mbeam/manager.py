@@ -7,17 +7,12 @@ import time
 
 
 from cache import CACHE
-from canvas import Canvas
 from constants import Constants
-from drawer import Drawer
 from fov import FoV
 from scan import Scan
 from section import Section
 from view import View
 from websocketcontroller import WebSocketController
-
-
-from image import Image
 
 
 class Manager(object):
@@ -203,33 +198,15 @@ class Manager(object):
 
   def get_image(self, data_path, x, y, z, w):
     '''
-    '''
-    # print data_path
-    image = self._views[data_path].canvases[w].pixels
-    ts = Constants.CLIENT_TILE_SIZE
-    # print image, image.shape
-    tile = image[y*ts:y*ts+ts,x*ts:x*ts+ts]
-    if Constants.INVERT:
-      tile = (255-tile)
-    return cv2.imencode('.jpg', tile)[1].tostring()
-
-
-  def get_image2(self, data_path, x, y, z, w):
-    '''
     Calculate which file(s) we need for the current openseadragon tile
     and load them as well as downsample them on the fly.
     '''
-    # if w<3:
-    #   return
 
     # print '-'*80
     # print 'SD', data_path, x, y, z, w
 
 
     view = self._views[data_path]
-    # canvas = view.canvases[w]
-
-    # print canvas._width, canvas._height
 
     # calculate canvas coordinates
     x_c = x*Constants.CLIENT_TILE_SIZE
@@ -239,8 +216,6 @@ class Manager(object):
 
     top_left = [x_c, y_c]
     bottom_right = [x_c+w_c, y_c+h_c]
-
-    # print 'BB', x_c, y_c, x_c+w_c, y_c+h_c
 
     # loop through all tiles and find ones which match the x_c, y_c, w_c, h_c bounding box
     required_tiles = {}
@@ -282,11 +257,9 @@ class Manager(object):
       tile_dict = required_tiles[t]
       tile = tile_dict['tile']  
 
+      # fov paths need to be treated differently
       if len(view._fovs) > 1:
-        # t_abs_data_path = os.path.join(abs_data_path, '..')
-
         t_abs_data_path = os.path.join(abs_data_path, tile_dict['fov'])
-
       else:
         t_abs_data_path = abs_data_path
 
@@ -309,31 +282,14 @@ class Manager(object):
       current_tile = tile.downsample(2**w)
       # self._tiles[t] = {w:current_tile}
 
-      
-
-
       # stitch it in our little openseadragon tile
       tx = tile_dict['tx'] / 2**w
       ty = tile_dict['ty'] / 2**w
       t_width = tile_dict['width'] / 2**w
       t_height = tile_dict['height'] / 2**w
 
-      # print 'TXTY', tx, ty, width, height
-      # print 'tlbr', top_left, bottom_right
-
-
-      # print 'stitch', ty-y_c,':',ty-y_c+height, tx-x_c,':',tx-x_c+width
-      # print 'stitch2', ty,':',ty+height, tx,':',tx+width
-
       stitched_x = int(max(tx, top_left[0]) - top_left[0])
       stitched_y = int(max(ty, top_left[1]) - top_left[1])
-      # stitched_w = t_width - max(top_left[0] - tx, 0)
-      # stitched_h = t_height - max(top_left[1] - ty, 0)
-
-
-
-      # stitched_w = min(t_width - max(top_left[0] - tx, 0), Constants.CLIENT_TILE_SIZE-stitched_x)
-      # stitched_h = min(t_height - max(top_left[1] - ty, 0), Constants.CLIENT_TILE_SIZE-stitched_y)
 
       stitched_w = min(t_width - max(top_left[0] - tx, 0), Constants.CLIENT_TILE_SIZE-stitched_x)
       stitched_h = min(t_height - max(top_left[1] - ty, 0), Constants.CLIENT_TILE_SIZE-stitched_y)
@@ -341,112 +297,12 @@ class Manager(object):
       t_sub_x = int(max(tx, top_left[0]) - tx)
       t_sub_y = int(max(ty, top_left[1]) - ty)
 
-      t_stitched_w = stitched_w#t_width - t_sub_x
-      t_stitched_h = stitched_h#t_height - t_sub_y
-
-      # print 'stitched x_y', stitched_x, stitched_y
-      # print 'stitched_w_h', stitched_w, stitched_h
-      # print 'tsub x_y', t_sub_x, t_sub_y
-
-
-      stitched[stitched_y:stitched_y+stitched_h, stitched_x:stitched_x+stitched_w] = current_tile[t_sub_y:t_sub_y+t_stitched_h, t_sub_x:t_sub_x+t_stitched_w]
-
-      # stitched[ty-y_c:ty-y_c+height, tx-x_c:tx-x_c+width] = current_tile[ty:ty+height, tx:tx+width]
-
-      # import sys
-      # sys.stdout.flush()
+      stitched[stitched_y:stitched_y+stitched_h, stitched_x:stitched_x+stitched_w] = current_tile[t_sub_y:t_sub_y+stitched_h, t_sub_x:t_sub_x+stitched_w]
 
     if Constants.INVERT:
       stitched = 255-stitched
 
     return cv2.imencode('.jpg', stitched)[1].tostring()
-
-
-    # offset_x_c = canvas._tx
-    # offset_y_c = canvas._ty
-    # # print offset_x_c, offset_y_c
-    # print x_c, y_c, w_c, h_c
-
-    # loaded_images = {}
-
-    # for fov in view._fovs:
-
-    #   offset_x_f = (fov._tx / view._ratio) / 2**w
-    #   offset_y_f = (fov._ty / view._ratio) / 2**w
-
-    #   real_offset_x = offset_x_f - offset_x_c
-    #   real_offset_y = offset_y_f - offset_y_c
-
-    #   # print offset_x_f - offset_x_c, offset_y_f - offset_y_c
-
-    #   if real_offset_x >= x_c and real_offset_x <= x_c + w_c:
-    #     if real_offset_y >= y_c and real_offset_y <= y_c + h_c:
-    #       # print 'yes', real_offset_x, real_offset_y
-
-    #       # ok this FoV is used for this tile
-    #       # now figure out which images we need
-    #       for i in fov._images:
-    #         # i = Image.from_string(i)
-    #         i = fov._images[i]
-    #         offset_x_i = (i._tx / view._ratio) / 2**w
-    #         offset_y_i = (i._ty / view._ratio) / 2**w
-    #         # print i, offset_x_i - offset_x_c, offset_y_i - offset_y_c
-    #         real_offset_x_i = offset_x_i - offset_x_c
-    #         real_offset_y_i = offset_y_i - offset_y_c
-    #         print real_offset_x_i, real_offset_y_i
-
-    #         if real_offset_x_i >= x_c and real_offset_x_i <= x_c + w_c:
-    #           if real_offset_y_i >= y_c and real_offset_y_i <= y_c + h_c:
-    #             # print 'image', real_offset_x_i, real_offset_y_i
-
-    #             # now we need to load this image and downsample it
-    #             directory = os.path.join(self._directory, data_path, fov.id)
-    #             image_file = directory, i.id
-    #             # print 'JAJAJAJA', directory, i.id
-                
-    #             if not image_file in loaded_images:
-    #               i.load(directory)
-    #               i._imagedata.create_full_pyramid()
-
-    #               loaded_images[image_file] = i
-    #               print i._imagedata._levels
-    #               pixels = i._imagedata._levels[-1].pixels
-
-    #             else:
-                  
-    #               print 'LOCAL CACHE HIT'
-    #               pixels = loaded_images[image_file]._imagedata._levels[-1].pixels
-
-
-
-    #             # print i
-    #             ts = Constants.CLIENT_TILE_SIZE
-    #             tile = pixels[y*ts:y*ts+ts,x*ts:x*ts+ts]
-    #             # if Constants.INVERT:
-    #             #   tile = (255-tile)
-    #             return cv2.imencode('.jpg', tile)[1].tostring()
-
-
-    #   #   else:
-    #   #     print 'no', real_offset_x, real_offset_y
-    #   # else:
-    #   #   print 'no', real_offset_x, real_offset_y
-
-    # print '-'*80
-
-
-  def on_drawing_fov_complete(self, view):
-    '''
-    This gets called from the drawer once a single FoV has been added to the view canvas.
-    '''
-    self._websocket_controller.send_refresh(view._data_path)
-
-
-  def on_drawing_view_complete(self, view):
-    '''
-    This gets called once the drawer finished a complete view canvas.
-    '''
-    self._active_workers.get() # reduce worker counter
 
 
   def tick(self):
@@ -458,31 +314,15 @@ class Manager(object):
     #
     # self.index() ### do not index all the time for now
 
-    #
-    # loop through cache
-    #
-    for canvas in CACHE:
-      canvas = CACHE[canvas]
-      delta = time.time() - canvas._last_used
-      if (delta >= Constants.CACHE_RESTING_TIME):
-        # we should free it here
-        canvas.free()
-
-
-    # do nothing more while workers are not available
-    if self._active_workers.full():
-      return    
-
-    # if len(self._viewing_queue) != 0:
-    #   view = self._viewing_queue.pop(0)
-
-    #   # we now use a separate process to work on this view
-    #   args = (self, view)
-    #   worker = mp.Process(target=Drawer.run, args=args)
-    #   self._active_workers.put(1) # increase worker counter
-    #   print 'starting drawer', view
-    #   worker.start()
-
+    # #
+    # # loop through cache
+    # #
+    # for canvas in CACHE:
+    #   canvas = CACHE[canvas]
+    #   delta = time.time() - canvas._last_used
+    #   if (delta >= Constants.CACHE_RESTING_TIME):
+    #     # we should free it here
+    #     canvas.free()
 
 
     

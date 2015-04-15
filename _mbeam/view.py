@@ -1,7 +1,6 @@
 import math
 import os
 
-from canvas import Canvas
 from constants import Constants
 
 class View(object):
@@ -10,7 +9,7 @@ class View(object):
     '''
     '''
     self._data_path = data_path
-    # self._canvases = canvases
+    
     self._fovs = fovs
     self._tiles = tiles
     self._ratio = ratio
@@ -19,12 +18,6 @@ class View(object):
     self._ty = ty
     self._width = width
     self._height = height
-
-  @property
-  def canvases(self):
-    '''
-    '''
-    return self._canvases
 
   @property
   def fovs(self):
@@ -62,15 +55,6 @@ class View(object):
         normalized_h = t._height / ratio
         
         tiles[fov.id+t.id] = {'tile': t, 'fov':fov.id, 'tx': normalized_tx, 'ty': normalized_ty, 'width': normalized_w, 'height': normalized_h}
-
-        # normalized_tile_positions.append([normalized_tx, normalized_ty])
-    # for w in zoomlevels:
-
-    #   canvases.append(Canvas(w_width, w_height, w_tx, w_ty))
-    #   w_width /= 2
-    #   w_height /= 2
-    #   w_tx /= 2
-    #   w_ty /= 2
 
     #
     # create a new View

@@ -113,11 +113,8 @@ class WebServer:
     z = int(tile[3])
     w = int(tile[0])
 
-    content = self._manager.get_image2(path, x, y, z, w)
+    content = self._manager.get_image(path, x, y, z, w)
     content_type = 'image/jpeg'
-    # TODO
-
-    
 
     # invalid request
     if not content:

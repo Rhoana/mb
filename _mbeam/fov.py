@@ -65,48 +65,6 @@ class FoV(object):
     self._height = height
 
 
-  # def stitch(self, level=0, ratio=1):
-  #   '''
-  #   '''
-  #   # TODO calculate ratio between one image and its' thumbnail, right now we assume 4
-  #   ratio = ratio*(level+1)
-
-  #   width = self._width / ratio
-  #   height = self._height / ratio
-
-  #   # print 'FOV',height, width, ratio
-
-  #   out = np.zeros((height, width), dtype=np.uint8)
-
-  #   for i in self._images:
-
-  #     image = self._images[i]
-  #     x = (image._tx - self._tx) / ratio
-  #     y = (image._ty - self._ty) / ratio
-
-  #     image = image._imagedata.levels[level].pixels
-  #     # print image.shape
-  #     out[y:y+image.shape[0],x:x+image.shape[1]] = image
-
-  #   return ImageCollection(out)
-
-
-  # def load_and_stitch(self, ratio=1):
-  #   '''
-  #   '''
-  #   print 'Loading all images'
-  #   # first load the thumbnails from disk
-  #   for i in self._images:
-  #     image = self._images[i]
-  #     image.load(self._directory, self._file_prefix, self._ratio)
-  #     # image.load(self._directory)
-
-  #   # now create the pyramid
-  #   stitched = self.stitch(ratio=ratio)
-  #   stitched.create_full_pyramid()
-
-  #   self._imagedata = stitched
-
   @staticmethod
   def filter_duplicate_lines(lines):
     '''
