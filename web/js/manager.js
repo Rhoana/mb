@@ -98,6 +98,7 @@ D.manager.prototype.setup_viewer = function(content) {
     preserveViewport: true,
     sequenceMode:   true,
     maxZoomPixelRatio: 10,
+    showFullPageControl: false,
     imageLoaderLimit: 3,
     // showNavigator: true,
     tileSources:   content
