@@ -32,10 +32,6 @@ class View(object):
     '''
     '''
 
-    zoomlevels = range(int(math.log(fovs[0]._width / ratio / Constants.PYRAMID_MIN_SIZE, 2)) + 1)
-
-    canvases = []
-
     w_width = width / ratio
     w_height = height / ratio
     w_tx = tx / ratio
