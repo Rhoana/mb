@@ -101,6 +101,9 @@ class Manager(object):
     level = 0
     for root, dirs, files in os.walk(data_path):
 
+      if level > 2:
+        return None
+
       if Constants.IMAGE_COORDINATES_FILE in files:
         if level == 0:
           # this is a FoV
