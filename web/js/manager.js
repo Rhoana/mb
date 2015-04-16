@@ -5,7 +5,7 @@ D.manager = function() {
   this._websocket = null;
   this._controller = new D.controller(this);
 
-  this._viewer = null;
+  this._viewers = [];
 
   this._contrast = 10;
 
@@ -62,9 +62,15 @@ D.manager.prototype.update_tree = function(data) {
 
 D.manager.prototype.setup_viewer = function(content) {
 
+  this._content = content;
+
   for (var i=0; i<content.length; i++) {
 
     var that = this;
+
+    content[i].getImageInfo = function(a,b,c) {
+      console.log('aaa',a,b,c)
+    }
 
     content[i].getTileUrl = function( level, x, y ) {
       // in openseadragon:
@@ -91,30 +97,109 @@ D.manager.prototype.setup_viewer = function(content) {
 
   }
 
-  this._viewer = OpenSeadragon({
-    id:            "viewer",
-    prefixUrl:     "images/",
-    navigatorSizeRatio: 0.25,
-    preserveViewport: true,
-    sequenceMode:   true,
-    maxZoomPixelRatio: 10,
-    showFullPageControl: false,
-    imageLoaderLimit: 3,
-    // showNavigator: true,
-    tileSources:   content
-  });
+  this._page = 0;
+
+  this._viewers.push(this.create_viewer(this._page, true));
+  this._viewers.push(this.create_viewer(this._page+1, false));
 
   // we need to monitor page changes to update our data path
-  this._viewer.addHandler('page', function(event) {
+  // this._viewer.addHandler('page', function(event) {
 
-    this._controller._data = content[event.page].data_path;
+  //   this._controller._data = content[event.page].data_path;
 
-  }.bind(this));
+  // }.bind(this));
 
   // update data_path in the controller
   this._controller._data = content[0].data_path;
 
+  
+
 };
+
+D.manager.prototype.create_viewer = function(page, visible) {
+  
+  // create dom element
+  var container_id = 'viewer_'+page;
+  if (!visible) {
+    var style = 'display:none';
+  } else {
+    var style = '';
+  }
+
+  $('#viewers').append('<div id="'+container_id+'" style="'+style+'"></div>');
+
+  return OpenSeadragon({
+      id:            container_id,
+      prefixUrl:     "images/",
+      navigatorSizeRatio: 0.25,
+      // preserveViewport: true,
+      // sequenceMode:   false,
+      maxZoomPixelRatio: 10,
+      showFullPageControl: false,
+      imageLoaderLimit: 3,
+      // showNavigator: true,
+      tileSources:   this._content[page]
+    });
+
+};
+
+
+
+D.manager.prototype.next = function() {
+
+  var old_container = '#viewer_'+this._page;
+  this._page++;
+  var new_container = '#viewer_'+this._page;
+  
+  // 
+  this._controller._data = this._content[this._page].data_path;
+  // CCC[this._page].width = CCC[0].width
+  // CCC[this._page].height = CCC[0].height
+  // CCC[this._page].layer = 0;
+
+  // this._viewer.destroy();
+
+  // var new_viewer = this.create_viewer(this._page, false);
+
+  this._viewers.push(this.create_viewer(this._page+1, false));
+
+  $(new_container).show();
+  $(old_container).hide();
+
+  // this._viewer = new_viewer;
+
+  // this._viewer.destroy();
+
+  // hide current viewer
+
+  // show new viewer
+
+};
+
+D.manager.prototype.prev = function() {
+  
+
+  var old_container = '#viewer_'+this._page;
+  this._page--;
+  var new_container = '#viewer_'+this._page;
+  
+  // 
+  this._controller._data = this._content[this._page].data_path;
+  // CCC[this._page].width = CCC[0].width
+  // CCC[this._page].height = CCC[0].height
+  // CCC[this._page].layer = 0;
+
+  // this._viewer.destroy();
+
+  // var new_viewer = this.create_viewer(this._page, false);
+
+  this._viewers.push(this.create_viewer(this._page-1, false));
+
+  $(new_container).show();
+  $(old_container).hide();
+
+};
+
 
 D.manager.prototype.refresh_viewer = function() {
 

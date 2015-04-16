@@ -7,7 +7,7 @@ from fov import FoV
 
 class Section(object):
 
-  def __init__(self, directory, fovs):
+  def __init__(self, directory, fovs, calculate_bounding_box):
     '''
     '''
     self._directory = directory
@@ -19,8 +19,10 @@ class Section(object):
     self._tz = -1
     self._width = -1
     self._height = -1
-    # calculate these values
-    self.update_bounding_box()
+
+    if calculate_bounding_box:
+      # calculate these values
+      self.update_bounding_box()
 
 
     self._imagedata = None
@@ -36,6 +38,15 @@ class Section(object):
   def id(self):
     return self._directory.strip(os.sep).split(os.sep)[-1]
     # return os.path.basename(self._directory)
+
+  def force_update_bounding_box(self):
+    '''
+    '''
+    for f in self._fovs:
+      f.update_bounding_box()
+
+    self.update_bounding_box()
+    
 
   def update_bounding_box(self):
     '''
@@ -69,7 +80,7 @@ class Section(object):
 
 
   @staticmethod
-  def from_directory(directory, file_prefix='', ratio=1):
+  def from_directory(directory, file_prefix='', ratio=1, calculate_bounding_box=False):
     '''
     Loads a section from a directory without loading any images.
 
@@ -86,9 +97,9 @@ class Section(object):
         # fovs always reside in directories
         continue
 
-      fov = FoV.from_directory(fov_path, file_prefix, ratio)
+      fov = FoV.from_directory(fov_path, file_prefix, ratio, calculate_bounding_box)
       if fov:
         fovs.append(fov)
 
-    section = Section(directory, fovs)
+    section = Section(directory, fovs, calculate_bounding_box)
     return section

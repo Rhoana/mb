@@ -7,7 +7,7 @@ from tile import Tile
 
 class FoV(object):
 
-  def __init__(self, directory, metadata, images, file_prefix='', ratio=1):
+  def __init__(self, directory, metadata, images, file_prefix='', ratio=1, calculate_bounding_box=False):
     '''
     '''
     self._directory = directory
@@ -20,8 +20,10 @@ class FoV(object):
     self._ty = -1
     self._width = -1
     self._height = -1
-    # calculate these values
-    self.update_bounding_box()
+
+    if calculate_bounding_box:
+      # calculate these values
+      self.update_bounding_box()
 
     self._imagedata = None
 
@@ -76,7 +78,7 @@ class FoV(object):
 
 
   @staticmethod
-  def from_directory(directory, file_prefix='', ratio=1):
+  def from_directory(directory, file_prefix='', ratio=1, calculate_bounding_box=False):
     '''
     Loads image_coordinates.txt and metadata.txt from
     a given directory but does not load any images.
@@ -133,5 +135,5 @@ class FoV(object):
         
 
 
-    fov = FoV(directory, metadata, tiles, file_prefix, ratio)
+    fov = FoV(directory, metadata, tiles, file_prefix, ratio, calculate_bounding_box)
     return fov

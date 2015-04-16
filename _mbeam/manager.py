@@ -125,7 +125,7 @@ class Manager(object):
     # detect if this is a scan, section or fov
     if self.check_path_type(os.path.join(self._directory, data_path)) == 'FOV':
       # this is a FoV
-      fov = FoV.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+      fov = FoV.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True) # index directly
 
       #
       # and now we create a view from it
@@ -136,7 +136,7 @@ class Manager(object):
 
     elif self.check_path_type(os.path.join(self._directory, data_path)) == 'SECTION':
 
-      section = Section.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+      section = Section.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True) # index directly
 
       #
       # and now we create a view from it
@@ -149,9 +149,13 @@ class Manager(object):
 
     elif self.check_path_type(os.path.join(self._directory, data_path)) == 'SCAN':
 
-      scan = Scan.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+      scan = Scan.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True) # lazy indexing
 
-      for section in scan._sections:
+      for i, section in enumerate(scan._sections):
+
+        # only index the first section
+        if i==0:
+          section.force_update_bounding_box()
 
         view = View.create(os.path.join(data_path, section.id), section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
 
