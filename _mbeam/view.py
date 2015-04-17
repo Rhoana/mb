@@ -56,9 +56,4 @@ class View(object):
     # create a new View
     #
     return View(data_path, w_tx, w_ty, w_width, w_height, fovs, tiles, ratio)
-    
-
-
-
-
 

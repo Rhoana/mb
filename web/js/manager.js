@@ -100,6 +100,29 @@ D.manager.prototype.setup_viewer = function(content) {
 
     // }
 
+    content[i].url = 'metainfo/' + content[i].data_path;
+    content[i].getImageInfo = function(url) {
+
+      var meta_info = $.ajax({
+        type: "GET",
+        url: url,
+        async: false
+      }).responseText;
+
+      meta_info = JSON.parse(meta_info);
+
+      this.width = meta_info.width;
+      this.height = meta_info.height;
+      this.minLevel = meta_info.minLevel;
+      this.maxLevel = meta_info.maxLevel;
+      this.tileSize = meta_info.tileSize;
+      this.layer = meta_info.layer;
+
+
+      console.log(this)
+      // return url;
+    }
+
     content[i].getTileUrl = function( level, x, y ) {
       // in openseadragon:
       // 0: smallest

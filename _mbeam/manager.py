@@ -1,4 +1,5 @@
 import cv2
+import json
 import math
 import multiprocessing as mp
 import numpy as np
@@ -133,82 +134,146 @@ class Manager(object):
 
     views = []
 
+    joined_path = os.path.join(self._directory, data_path)
+
     # detect if this is a scan, section or fov
-    if self.check_path_type(os.path.join(self._directory, data_path)) == 'FOV':
+    if self.check_path_type(joined_path) == 'FOV':
       # this is a FoV
-      fov = FoV.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True) # index directly
+      # fov = FoV.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, False) # lazy indexing
 
-      #
-      # and now we create a view from it
-      view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty, Constants.IMAGE_RATIO)
+      # #
+      # # and now we create a view from it
+      # view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty, Constants.IMAGE_RATIO)
 
-      views.append(view)
+      # views.append(view)
 
-
-    elif self.check_path_type(os.path.join(self._directory, data_path)) == 'SECTION':
-
-      section = Section.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True) # index directly
-
-      #
-      # and now we create a view from it
-      # view = View.from_Section(section, 4)
-      # print 'txty sec', section._tx, section._ty
-      view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
-
-      views.append(view)
+      views.append({'data_path':data_path})
 
 
-    elif self.check_path_type(os.path.join(self._directory, data_path)) == 'SCAN':
+    elif self.check_path_type(joined_path) == 'SECTION':
 
-      scan = Scan.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, False) # lazy indexing
+      # section = Section.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, False) # lazy indexing
+
+      # #
+      # # and now we create a view from it
+      # # view = View.from_Section(section, 4)
+      # # print 'txty sec', section._tx, section._ty
+      # view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
+
+      views.append({'data_path':data_path})
+
+
+
+
+    elif self.check_path_type(joined_path) == 'SCAN':
+
+      scan = Scan.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, False) # lazy indexing
 
       for i, section in enumerate(scan._sections):
 
-        # only index the first section
-        if i==0:
-          section.force_update_bounding_box()
+        # # only index the first section
+        # if i==0:
+        #   section.force_update_bounding_box()
 
-        view = View.create(os.path.join(data_path, section.id), section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
+        # view = View.create(os.path.join(data_path, section.id), section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
 
-        views.append(view)
+        views.append({'data_path':os.path.join(data_path, section.id)})
     
     
-    view_descriptors = []
+    # view_descriptors = []
 
-    for j,view in enumerate(views):
 
+    return views
+
+    # for j,view in enumerate(views):
+
+    #   view_descriptors.append(view._data_path)
+
+
+
+      # #
+      # # we grab the width and height of the canvas of this view
+      # # and calculate the zoomlevels
+      # maxLevel = 5#len(view.canvases) - 1 ### TODO calculate
+      # # canvas = view.canvases[0]
+      # width = view._width
+      # height = view._height
+
+      # # zoomlevels = range(int(math.log(width / Manager.THUMBNAIL_RATIO / Manager.PYRAMID_MIN_SIZE,2)) + 1)
+
+      # view_descriptor = {}
+      # view_descriptor['data_path'] = view._data_path
+      # # view_descriptor['width'] = width #/ Manager.THUMBNAIL_RATIO
+      # # view_descriptor['height'] = height #/ Manager.THUMBNAIL_RATIO
+      # # view_descriptor['url'] = 'meta_info/' + view._data_path
+      # view_descriptor['layer'] = j
+      # view_descriptor['minLevel'] = 0#zoomlevels[0]
+      # view_descriptor['maxLevel'] = 1#maxLevel#zoomlevels[-1]
+      # view_descriptor['tileSize'] = Constants.CLIENT_TILE_SIZE
+      # view_descriptors.append(view_descriptor)
+
+      # #
+      # # HERE, WE ADD THE VIEW TO OUR QUEUE
+      # # BUT ONLY IF WE DO NOT HAVE THIS VIEW YET
+      # #
+      # if not view._data_path in self._views:
+      #   self._viewing_queue.append(view)
+      #   #
+      #   # and to our views dictionary
+      #   #
+      #   self._views[view._data_path] = view
+
+    # return view_descriptors
+
+  def get_meta_info(self, data_path):
+    '''
+    Get meta information for a requested data path.
+    '''
+    print 'DATA',data_path
+
+
+    joined_path = os.path.join(self._directory, data_path)
+
+    # detect if this is a scan, section or fov
+    if self.check_path_type(joined_path) == 'FOV':
+      # this is a FoV
+      fov = FoV.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True)
+
+      width = fov._width
+      height = fov._height
+
+      view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty, Constants.IMAGE_RATIO)
+
+    elif self.check_path_type(joined_path) == 'SECTION':
+
+      section = Section.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True)
+
+      width = section._width
+      height = section._height
+
+      view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
+
+
+    if not view._data_path in self._views:
+      
       #
-      # we grab the width and height of the canvas of this view
-      # and calculate the zoomlevels
-      maxLevel = 5#len(view.canvases) - 1 ### TODO calculate
-      # canvas = view.canvases[0]
-      width = view._width
-      height = view._height
-
-      # zoomlevels = range(int(math.log(width / Manager.THUMBNAIL_RATIO / Manager.PYRAMID_MIN_SIZE,2)) + 1)
-
-      view_descriptor = {}
-      view_descriptor['data_path'] = view._data_path
-      view_descriptor['width'] = width #/ Manager.THUMBNAIL_RATIO
-      view_descriptor['height'] = height #/ Manager.THUMBNAIL_RATIO
-      view_descriptor['layer'] = j
-      view_descriptor['minLevel'] = 0#zoomlevels[0]
-      view_descriptor['maxLevel'] = 1#maxLevel#zoomlevels[-1]
-      view_descriptor['tileSize'] = Constants.CLIENT_TILE_SIZE
-      view_descriptors.append(view_descriptor)
-
+      # and to our views dictionary
       #
-      # HERE, WE ADD THE VIEW TO OUR QUEUE
-      # BUT ONLY IF WE DO NOT HAVE THIS VIEW YET
-      #
-      if not view._data_path in self._views:
-        self._viewing_queue.append(view)
-        #
-        # and to our views dictionary
-        #
-        self._views[view._data_path] = view
+      self._views[view._data_path] = view
 
-    return view_descriptors
+
+    meta_info = {}
+    meta_info['width'] = width / Constants.IMAGE_RATIO
+    meta_info['height'] = height / Constants.IMAGE_RATIO
+    meta_info['layer'] = 0
+    meta_info['minLevel'] = 0#zoomlevels[0]
+    meta_info['maxLevel'] = 1#maxLevel#zoomlevels[-1]
+    meta_info['tileSize'] = Constants.CLIENT_TILE_SIZE    
+
+
+    
+
+    return json.dumps(meta_info)
 
 
   def get_image(self, data_path, x, y, z, w):
@@ -218,7 +283,7 @@ class Manager(object):
     '''
 
     # print '-'*80
-    # print 'SD', data_path, x, y, z, w
+    print 'SD', data_path, x, y, z, w
 
 
     view = self._views[data_path]
