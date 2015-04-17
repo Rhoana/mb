@@ -229,7 +229,7 @@ class Manager(object):
     '''
     Get meta information for a requested data path.
     '''
-    print 'DATA',data_path
+    # print 'DATA',data_path
 
 
     joined_path = os.path.join(self._directory, data_path)

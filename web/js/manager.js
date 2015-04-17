@@ -100,28 +100,28 @@ D.manager.prototype.setup_viewer = function(content) {
 
     // }
 
-    content[i].url = 'metainfo/' + content[i].data_path;
-    content[i].getImageInfo = function(url) {
+    content[i].meta_info_url = 'metainfo/' + content[i].data_path;
+    // content[i].getImageInfo = function(url) {
 
-      var meta_info = $.ajax({
-        type: "GET",
-        url: url,
-        async: false
-      }).responseText;
+    //   var meta_info = $.ajax({
+    //     type: "GET",
+    //     url: url,
+    //     async: false
+    //   }).responseText;
 
-      meta_info = JSON.parse(meta_info);
+    //   meta_info = JSON.parse(meta_info);
 
-      this.width = meta_info.width;
-      this.height = meta_info.height;
-      this.minLevel = meta_info.minLevel;
-      this.maxLevel = meta_info.maxLevel;
-      this.tileSize = meta_info.tileSize;
-      this.layer = meta_info.layer;
+    //   this.width = meta_info.width;
+    //   this.height = meta_info.height;
+    //   this.minLevel = meta_info.minLevel;
+    //   this.maxLevel = meta_info.maxLevel;
+    //   this.tileSize = meta_info.tileSize;
+    //   this.layer = meta_info.layer;
 
 
-      console.log(this)
-      // return url;
-    }
+    //   console.log()
+    //   // return url;
+    // }
 
     content[i].getTileUrl = function( level, x, y ) {
       // in openseadragon:
@@ -160,6 +160,25 @@ D.manager.prototype.create_viewer = function(page, visible) {
 
   $('#viewers').append('<div id="'+container_id+'" class="viewers" style="'+style+'"></div>');
 
+  var ts = this._content[page];
+
+
+  var meta_info = $.ajax({
+    type: "GET",
+    url: ts.meta_info_url,
+    async: false
+  }).responseText;
+
+  meta_info = JSON.parse(meta_info);
+
+  ts.width = meta_info.width;
+  ts.height = meta_info.height;
+  ts.minLevel = meta_info.minLevel;
+  ts.maxLevel = meta_info.maxLevel;
+  ts.tileSize = meta_info.tileSize;
+  ts.layer = meta_info.layer;
+
+
   var viewer = OpenSeadragon({
       id:            container_id,
       prefixUrl:     "images/",
@@ -170,7 +189,7 @@ D.manager.prototype.create_viewer = function(page, visible) {
       showNavigationControl: false,
       imageLoaderLimit: 3,
       // showNavigator: true,
-      tileSources:   this._content[page]
+      tileSources:   ts
     });
 
   // viewer.addHandler('tile-drawn', function(event,a) {
@@ -224,7 +243,7 @@ D.manager.prototype.move = function(sign) {
     if (this._page+1 >= this._content.length) {
       this._next_viewer = null;
     } else {
-      this._controller.request_meta_data(this._content[this._page+1]['data_path'])
+      // this._controller.request_meta_data(this._content[this._page+1]['data_path'])
       this._next_viewer = this.create_viewer(this._page+1, false);
     }
     
