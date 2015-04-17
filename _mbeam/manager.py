@@ -283,7 +283,7 @@ class Manager(object):
     '''
 
     # print '-'*80
-    print 'SD', data_path, x, y, z, w
+    # print 'SD', data_path, x, y, z, w
 
 
     view = self._views[data_path]
