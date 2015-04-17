@@ -47,6 +47,29 @@ D.manager.prototype.setup_controls = function() {
     }
   });
 
+  // keyboard
+  $('window').onkeydown = this.onkeydown.bind(this);
+
+};
+
+D.manager.prototype.onkeydown = function(e) {
+
+  if (e.keyCode == 87) {
+  
+    this._keypress_callback = setTimeout(function() {
+      this.move(1);
+      this._keypress_callback = null;
+    }.bind(this),10);   
+
+  } else if (e.keyCode == 83) {
+  
+    this._keypress_callback = setTimeout(function() {
+      this.move(-1);
+      this._keypress_callback = null;
+    }.bind(this),10);   
+
+  }
+
 };
 
 D.manager.prototype.update_parameters = function() {
@@ -71,6 +94,11 @@ D.manager.prototype.setup_viewer = function(content) {
   for (var i=0; i<content.length; i++) {
 
     var that = this;
+
+    // content[i].getTileUrl = function( a,b,c ) {
+    //   console.log(a,b,c)
+
+    // }
 
     content[i].getTileUrl = function( level, x, y ) {
       // in openseadragon:
@@ -109,18 +137,29 @@ D.manager.prototype.create_viewer = function(page, visible) {
 
   $('#viewers').append('<div id="'+container_id+'" class="viewers" style="'+style+'"></div>');
 
-  return OpenSeadragon({
+  var viewer = OpenSeadragon({
       id:            container_id,
       prefixUrl:     "images/",
       navigatorSizeRatio: 0.25,
       // preserveViewport: true,
       // sequenceMode:   false,
       maxZoomPixelRatio: 10,
-      showFullPageControl: false,
+      showNavigationControl: false,
       imageLoaderLimit: 3,
       // showNavigator: true,
       tileSources:   this._content[page]
     });
+
+  // viewer.addHandler('tile-drawn', function(event,a) {
+
+  //   console.log(event,a)
+
+  // }.bind(this));
+
+  // keyboard (needs to be rebound to overwrite OSD)
+  window.onkeypress = window.onkeydown = this.onkeydown.bind(this);
+
+  return viewer;  
 
 };
 
@@ -129,10 +168,10 @@ D.manager.prototype.create_viewer = function(page, visible) {
 D.manager.prototype.move = function(sign) {
 
   if (this._page + 1*sign >= this._content.length) {
-    console.log('reached right end');
+    // console.log('reached right end');
     return;
   } else if (this._page + 1*sign < 0) {
-    console.log('reached left end');
+    // console.log('reached left end');
     return;
   }
 
@@ -162,7 +201,8 @@ D.manager.prototype.move = function(sign) {
     if (this._page+1 >= this._content.length) {
       this._next_viewer = null;
     } else {
-      this._next_viewer = this.create_viewer(this._page+1, false);  
+      this._controller.request_meta_data(this._content[this._page+1]['data_path'])
+      this._next_viewer = this.create_viewer(this._page+1, false);
     }
     
 

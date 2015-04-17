@@ -52,6 +52,17 @@ D.controller.prototype.request_content = function() {
 
 };
 
+D.controller.prototype.request_meta_data = function(data_path) {
+
+  var output = {};
+  output['name'] = 'META_DATA';
+  output['origin'] = this._user_id;
+  output['value'] = data_path;
+ 
+  this._manager._websocket.send(output);
+
+};
+
 D.controller.prototype.refresh = function(data_path) {
 
   if (this._data == data_path) {

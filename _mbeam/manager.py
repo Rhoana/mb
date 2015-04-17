@@ -118,6 +118,14 @@ class Manager(object):
       level += 1
 
 
+  def calculate_width_height(self, data_path):
+    '''
+    '''
+    section = Section.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True)
+    
+    return [section._width / Constants.IMAGE_RATIO, section._height / Constants.IMAGE_RATIO]
+
+
   def get_content(self, data_path):
     '''
     Sends the content listing for a given path. This detects if the path is scan, section or fov.
@@ -152,7 +160,7 @@ class Manager(object):
 
     elif self.check_path_type(os.path.join(self._directory, data_path)) == 'SCAN':
 
-      scan = Scan.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True) # lazy indexing
+      scan = Scan.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, False) # lazy indexing
 
       for i, section in enumerate(scan._sections):
 
