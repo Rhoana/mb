@@ -42,6 +42,56 @@ class FoV(object):
   def update_bounding_box(self):
     '''
     '''
+
+    # first, grab the meta data, then calculate the bounding box
+    directory = self._directory
+    metadata_file = os.path.join(directory, Constants.METADATA_FILE)
+    image_coordinates_file = os.path.join(directory, Constants.IMAGE_COORDINATES_FILE)
+
+
+    #
+    # read meta data
+    #
+    metadata = {}
+
+    with open(metadata_file) as f:
+      for l in f.readlines():
+        l = l.strip()
+        values = l.split('\t')
+        metadata[values[0].strip(':')] = values[-1]
+
+    #
+    # we do want to parse some of the meta data
+    #
+    width = int(metadata['Width'].strip('px'))
+    height = int(metadata['Height'].strip('px'))
+    
+    #
+    # index tiles
+    #
+    tiles = {}
+
+    with open(image_coordinates_file) as f:
+      
+      # we need to remove duplicate entries here
+      lines = FoV.filter_duplicate_lines(f.readlines())
+      
+      for i,l in enumerate(lines):
+        if i>60:
+          # only look at the first 61 entries since we do not use other thumbnails
+          break
+        tile = Tile.from_string(l)
+        # update width and height
+        tile.width = width
+        tile.height = height
+        tiles[tile.id] = tile
+        #image.load_thumbnail(directory) # load the small representation
+
+
+    self._tiles = tiles
+    self._metadata = metadata
+
+    # now the bounding box
     width = -sys.maxint
     height = -sys.maxint
 
@@ -95,45 +145,8 @@ class FoV(object):
     if not os.path.exists(metadata_file) or not os.path.exists(image_coordinates_file):
       return None
 
-    #
-    # read meta data
-    #
-    metadata = {}
-
-    with open(metadata_file) as f:
-      for l in f.readlines():
-        l = l.strip()
-        values = l.split('\t')
-        metadata[values[0].strip(':')] = values[-1]
-
-    #
-    # we do want to parse some of the meta data
-    #
-    width = int(metadata['Width'].strip('px'))
-    height = int(metadata['Height'].strip('px'))
-    
-    #
-    # index tiles
-    #
-    tiles = {}
-
-    with open(image_coordinates_file) as f:
-      
-      # we need to remove duplicate entries here
-      lines = FoV.filter_duplicate_lines(f.readlines())
-      
-      for i,l in enumerate(lines):
-        if i>60:
-          # only look at the first 61 entries since we do not use other thumbnails
-          break
-        tile = Tile.from_string(l)
-        # update width and height
-        tile.width = width
-        tile.height = height
-        tiles[tile.id] = tile
-        #image.load_thumbnail(directory) # load the small representation
-        
-
+    metadata = None
+    tiles = None
 
     fov = FoV(directory, metadata, tiles, file_prefix, ratio, calculate_bounding_box)
     return fov
