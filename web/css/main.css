@@ -50,9 +50,22 @@ body {
   z-index: 100;
 }
 
+.labels {
+  margin-bottom: 10px;
+  display: none;
+  /*border-bottom: solid darkgrey 1px;*/
+}
+
+.label {
+  font-size: 10px;
+  color: white;
+  font-family: sans-serif;
+}
+
 .range {
   width: 160px;
   position: relative;
+  margin-top: 3px;
   /*margin: 20px auto;*/
   border: 0;
   height: 2px;

@@ -74,6 +74,9 @@ D.manager.prototype.onkeydown = function(e) {
 
 D.manager.prototype.update_parameters = function() {
 
+  $('#section').html('Section '+(this._page+1)+'/'+this._content.length);
+
+
   $(MANAGER._viewer.canvas.children[0]).css('webkit-filter','contrast('+(this._contrast)/10+')');
 
 };
@@ -90,6 +93,12 @@ D.manager.prototype.update_tree = function(data) {
 D.manager.prototype.setup_viewer = function(content) {
 
   this._content = content;
+
+  // update sequence label
+  if (content.length > 1) {
+    $('#section').html('Section 1/'+content.length);
+    $('.labels').show();
+  }
 
   for (var i=0; i<content.length; i++) {
 
