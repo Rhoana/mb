@@ -354,7 +354,7 @@ class Manager(object):
       if t in self._tiles:
         if w in self._tiles[t]:
           current_tile = self._tiles[t][w]
-          print 'CACHE HIT'
+          # print 'CACHE HIT'
         else:
           # tile there but not correct zoomlevel
           tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
@@ -369,7 +369,7 @@ class Manager(object):
           first_added_item = self._tiles.keys()[0]
 
           if t != first_added_item:
-            print 'FREEING'
+            # print 'FREEING'
             del self._tiles[first_added_item]
 
         tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
