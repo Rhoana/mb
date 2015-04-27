@@ -139,6 +139,10 @@ D.manager.prototype.setup_viewer = function(content) {
 
   this._viewer = this.create_viewer(this._page, true);
 
+  // this._viewer.addHandler('pan', this.propagate_viewport.bind(this));
+  // this._viewer.addHandler('zoom', this.propagate_viewport.bind(this));
+
+
   if (content.length > 1) {
     this._next_viewer = this.create_viewer(this._page+1, false);
   }
@@ -147,6 +151,26 @@ D.manager.prototype.setup_viewer = function(content) {
   this._controller._data = content[0].data_path;
 
 };
+
+
+D.manager.prototype.propagate_viewport = function(event) {
+
+  // propagate the current viewport to the previous and the next viewers
+
+  // console.log('propagating viewport', event.eventSource.id)
+  return
+  if (this._prev_viewer) {
+    this._prev_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
+    this._prev_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
+  }
+
+  if (this._next_viewer) {
+    this._next_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
+    this._next_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
+  }
+
+};
+
 
 D.manager.prototype.create_viewer = function(page, visible) {
   
@@ -230,15 +254,27 @@ D.manager.prototype.move = function(sign) {
 
     // we destroy the old previous viewer
     if (this._prev_viewer) {
+      // this._prev_viewer.removeAllHandlers('pan');
+      // this._prev_viewer.removeAllHandlers('zoom');
       this._prev_viewer.destroy();
       // console.log('freeing previous viewer');
     }
 
     // the prev viewer is set to the current one
     var old_viewer = this._viewer;
+    // old_viewer.removeAllHandlers('pan');
+    // old_viewer.removeAllHandlers('zoom');        
     this._prev_viewer = this._viewer;
+    // this._prev_viewer.removeAllHandlers('pan');
+    // this._prev_viewer.removeAllHandlers('zoom');
+
     // the current viewer is set to the next one
     this._viewer = this._next_viewer;
+
+    // this._viewer.addHandler('pan', this.propagate_viewport.bind(this));
+    // this._viewer.addHandler('zoom', this.propagate_viewport.bind(this));
+
+
     // and the next viewer shall be a new one
     if (this._page+1 >= this._content.length) {
       this._next_viewer = null;
@@ -253,15 +289,27 @@ D.manager.prototype.move = function(sign) {
 
     // we destroy the old next viewer
     if (this._next_viewer) {
+      // this._next_viewer.removeAllHandlers('pan');
+      // this._next_viewer.removeAllHandlers('zoom');      
       this._next_viewer.destroy();
       // console.log('freeing next viewer');
     }
 
     // the next viewer is set to the current one
     var old_viewer = this._viewer;
+    // old_viewer.removeAllHandlers('pan');
+    // old_viewer.removeAllHandlers('zoom');          
     this._next_viewer = this._viewer;
+    // this._next_viewer.removeAllHandlers('pan');
+    // this._next_viewer.removeAllHandlers('zoom'); 
+
     // the current viewer is set to the previous one
     this._viewer = this._prev_viewer;
+
+    // this._viewer.addHandler('pan', this.propagate_viewport.bind(this));
+    // this._viewer.addHandler('zoom', this.propagate_viewport.bind(this));
+
+
     // and the previous viewer shall be a new one
     if (this._page-1 < 0) {
       this._prev_viewer = null;
