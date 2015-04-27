@@ -6,6 +6,8 @@ import numpy as np
 import os
 import time
 
+from collections import OrderedDict
+
 
 from cache import CACHE
 from constants import Constants
@@ -36,7 +38,8 @@ class Manager(object):
     self._no_workers = 3#mp.cpu_count() - 1
     self._active_workers = mp.Queue(self._no_workers)
 
-    self._tiles = {}
+    self._tiles = OrderedDict() # tile cache
+    self._tile_cache_size = 61*5 # enough for 1 MFOV for 5 parallel users
 
 
   def start(self):
@@ -348,19 +351,30 @@ class Manager(object):
       #
 
       # print 'LOADING', os.path.join(t_abs_data_path, tile._filename)
-      # if t in self._tiles:
-      #   if w in self._tiles[t]:
-      #     current_tile = self._tiles[t][w]
-      #     # print 'CACHE HIT'
-      #   else:
-      #     # tile there but not correct zoomlevel
-      #     tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
-      #     current_tile = tile.downsample(2**w)
-      #     self._tiles[t][w] = tile._imagedata  
-      # else: 
-      tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
-      current_tile = tile.downsample(2**w)
-      # self._tiles[t] = {w:current_tile}
+      if t in self._tiles:
+        if w in self._tiles[t]:
+          current_tile = self._tiles[t][w]
+          print 'CACHE HIT'
+        else:
+          # tile there but not correct zoomlevel
+          tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+          current_tile = tile.downsample(2**w)
+          self._tiles[t][w] = tile._imagedata  
+      else: 
+        #
+        # we add to cache
+        #
+        if len(self._tiles.keys()) >= self._tile_cache_size:
+          # delete the first added item but only if the item is not the current tile
+          first_added_item = self._tiles.keys()[0]
+
+          if t != first_added_item:
+            print 'FREEING'
+            del self._tiles[first_added_item]
+
+        tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+        current_tile = tile.downsample(2**w)
+        self._tiles[t] = {w:current_tile}
 
       # stitch it in our little openseadragon tile
       tx = tile_dict['tx'] / 2**w
