@@ -41,6 +41,8 @@ class Manager(object):
     self._tiles = OrderedDict() # tile cache
     self._tile_cache_size = 61*5 # enough for 1 MFOV for 5 parallel users
 
+    self._client_tiles = {}
+
 
   def start(self):
     '''
@@ -289,6 +291,21 @@ class Manager(object):
     # print 'SD', data_path, x, y, z, w
 
 
+
+    if Constants.CACHE_CLIENT_TILES:
+      
+      osd_file_url = data_path.replace('/', '_') + '_' + str(x) + '_' + str(y) + '_' + str(z) + '_' + str(w) + '.jpg'
+      osd_file_url_full = os.path.join(Constants.CLIENT_TILE_CACHE_FOLDER, osd_file_url)
+
+      if os.path.exists(osd_file_url_full):
+
+        # we have this OSD tile cached on disk
+        # print 'OSD CACHE HIT'
+        osd_tile = cv2.imread(osd_file_url_full, 0)
+        return cv2.imencode('.jpg', osd_tile)[1].tostring()
+
+
+
     view = self._views[data_path]
 
     # calculate canvas coordinates
@@ -395,6 +412,10 @@ class Manager(object):
 
     if Constants.INVERT:
       stitched = 255-stitched
+
+    if Constants.CACHE_CLIENT_TILES:
+      # print 'Writing OSD tile', osd_file_url_full
+      cv2.imwrite(osd_file_url_full, stitched)
 
     return cv2.imencode('.jpg', stitched)[1].tostring()
 
