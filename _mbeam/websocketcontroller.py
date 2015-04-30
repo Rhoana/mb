@@ -55,3 +55,15 @@ class WebSocketController(object):
       output['value'] = content
 
       self._websocket.send(json.dumps(output))
+
+    elif (message['name'] == 'META_DATA'):
+
+      meta_data = self._manager.calculate_width_height(message['value'])
+
+      output = {}
+      output['name'] = 'META_DATA'
+      output['origin'] = message['origin']
+      output['value'] = meta_data
+
+      self._websocket.send(json.dumps(output))
+

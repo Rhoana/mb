@@ -86,6 +86,7 @@ class WebServer:
 
       (r'/ws', WebSocketHandler, dict(manager=self._manager)),
       
+      (r'/metainfo/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/data/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/(.*)', tornado.web.StaticFileHandler, dict(path=os.path.join(os.path.dirname(__file__),'../web'), default_filename='index.html'))
   
@@ -105,28 +106,41 @@ class WebServer:
     content = None
 
     splitted_request = handler.request.uri.split('/')
-    path = '/'.join(splitted_request[2:-1])
-    tile = splitted_request[-1].split('-')
 
-    x = int(tile[1])
-    y = int(tile[2])
-    z = int(tile[3])
-    w = int(tile[0])
+    # print splitted_request
 
-    content = self._manager.get_image(path, x, y, z, w)
-    content_type = 'image/jpeg'
-    # TODO
+    if splitted_request[1] == 'metainfo':
 
-    
+      path = '/'.join(splitted_request[2:])
+
+      content = self._manager.get_meta_info(path)
+      content_type = 'text/html'
+
+    elif splitted_request[1] == 'data':
+
+      # this is for actual image data
+
+      path = '/'.join(splitted_request[2:-1])
+      tile = splitted_request[-1].split('-')
+
+      x = int(tile[1])
+      y = int(tile[2])
+      z = int(tile[3])
+      w = int(tile[0])
+
+      content = self._manager.get_image(path, x, y, z, w)
+      content_type = 'image/jpeg'
+
+
 
     # invalid request
     if not content:
       content = 'Error 404'
       content_type = 'text/html'
 
-    handler.set_header('Cache-Control','no-cache, no-store, must-revalidate')
-    handler.set_header('Pragma','no-cache')
-    handler.set_header('Expires','0')
+    # handler.set_header('Cache-Control','no-cache, no-store, must-revalidate')
+    # handler.set_header('Pragma','no-cache')
+    # handler.set_header('Expires','0')
     handler.set_header('Access-Control-Allow-Origin', '*')
     handler.set_header('Content-Type', content_type)
     handler.write(content)

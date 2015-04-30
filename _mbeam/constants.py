@@ -10,3 +10,5 @@ class Constants(object):
   IMAGE_PREFIX = 'thumbnail_'
   IMAGE_RATIO = 4
   INVERT = True
+  CACHE_CLIENT_TILES = True
+  CLIENT_TILE_CACHE_FOLDER = '/tmp/'

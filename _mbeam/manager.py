@@ -1,19 +1,22 @@
 import cv2
+import json
 import math
 import multiprocessing as mp
+import numpy as np
 import os
 import time
 
+from collections import OrderedDict
+
 
 from cache import CACHE
-from canvas import Canvas
 from constants import Constants
-from drawer import Drawer
 from fov import FoV
 from scan import Scan
 from section import Section
 from view import View
 from websocketcontroller import WebSocketController
+
 
 class Manager(object):
 
@@ -34,6 +37,11 @@ class Manager(object):
 
     self._no_workers = 3#mp.cpu_count() - 1
     self._active_workers = mp.Queue(self._no_workers)
+
+    self._tiles = OrderedDict() # tile cache
+    self._tile_cache_size = 61*5 # enough for 1 MFOV for 5 parallel users
+
+    self._client_tiles = {}
 
 
   def start(self):
@@ -99,6 +107,9 @@ class Manager(object):
     level = 0
     for root, dirs, files in os.walk(data_path):
 
+      if level > 2:
+        return None
+
       if Constants.IMAGE_COORDINATES_FILE in files:
         if level == 0:
           # this is a FoV
@@ -113,6 +124,14 @@ class Manager(object):
       level += 1
 
 
+  def calculate_width_height(self, data_path):
+    '''
+    '''
+    section = Section.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True)
+    
+    return [section._width / Constants.IMAGE_RATIO, section._height / Constants.IMAGE_RATIO]
+
+
   def get_content(self, data_path):
     '''
     Sends the content listing for a given path. This detects if the path is scan, section or fov.
@@ -120,105 +139,285 @@ class Manager(object):
 
     views = []
 
-    # detect if this is a scan, section or fov
-    if self.check_path_type(os.path.join(self._directory, data_path)) == 'FOV':
-      # this is a FoV
-      fov = FoV.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+    joined_path = os.path.join(self._directory, data_path)
 
-      #
-      # and now we create a view from it
+    # detect if this is a scan, section or fov
+    if self.check_path_type(joined_path) == 'FOV':
+      # this is a FoV
+      # fov = FoV.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, False) # lazy indexing
+
+      # #
+      # # and now we create a view from it
+      # view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty, Constants.IMAGE_RATIO)
+
+      # views.append(view)
+
+      views.append({'data_path':data_path})
+
+
+    elif self.check_path_type(joined_path) == 'SECTION':
+
+      # section = Section.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, False) # lazy indexing
+
+      # #
+      # # and now we create a view from it
+      # # view = View.from_Section(section, 4)
+      # # print 'txty sec', section._tx, section._ty
+      # view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
+
+      views.append({'data_path':data_path})
+
+
+
+
+    elif self.check_path_type(joined_path) == 'SCAN':
+
+      scan = Scan.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, False) # lazy indexing
+
+      for i, section in enumerate(scan._sections):
+
+        # # only index the first section
+        # if i==0:
+        #   section.force_update_bounding_box()
+
+        # view = View.create(os.path.join(data_path, section.id), section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
+
+        views.append({'data_path':os.path.join(data_path, section.id)})
+    
+    
+    # view_descriptors = []
+
+
+    return views
+
+    # for j,view in enumerate(views):
+
+    #   view_descriptors.append(view._data_path)
+
+
+
+      # #
+      # # we grab the width and height of the canvas of this view
+      # # and calculate the zoomlevels
+      # maxLevel = 5#len(view.canvases) - 1 ### TODO calculate
+      # # canvas = view.canvases[0]
+      # width = view._width
+      # height = view._height
+
+      # # zoomlevels = range(int(math.log(width / Manager.THUMBNAIL_RATIO / Manager.PYRAMID_MIN_SIZE,2)) + 1)
+
+      # view_descriptor = {}
+      # view_descriptor['data_path'] = view._data_path
+      # # view_descriptor['width'] = width #/ Manager.THUMBNAIL_RATIO
+      # # view_descriptor['height'] = height #/ Manager.THUMBNAIL_RATIO
+      # # view_descriptor['url'] = 'meta_info/' + view._data_path
+      # view_descriptor['layer'] = j
+      # view_descriptor['minLevel'] = 0#zoomlevels[0]
+      # view_descriptor['maxLevel'] = 1#maxLevel#zoomlevels[-1]
+      # view_descriptor['tileSize'] = Constants.CLIENT_TILE_SIZE
+      # view_descriptors.append(view_descriptor)
+
+      # #
+      # # HERE, WE ADD THE VIEW TO OUR QUEUE
+      # # BUT ONLY IF WE DO NOT HAVE THIS VIEW YET
+      # #
+      # if not view._data_path in self._views:
+      #   self._viewing_queue.append(view)
+      #   #
+      #   # and to our views dictionary
+      #   #
+      #   self._views[view._data_path] = view
+
+    # return view_descriptors
+
+  def get_meta_info(self, data_path):
+    '''
+    Get meta information for a requested data path.
+    '''
+    # print 'DATA',data_path
+
+
+    joined_path = os.path.join(self._directory, data_path)
+
+    # detect if this is a scan, section or fov
+    if self.check_path_type(joined_path) == 'FOV':
+      # this is a FoV
+      fov = FoV.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True)
+
+      width = fov._width
+      height = fov._height
+
       view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty, Constants.IMAGE_RATIO)
 
-      views.append(view)
+    elif self.check_path_type(joined_path) == 'SECTION':
 
+      section = Section.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True)
 
-    elif self.check_path_type(os.path.join(self._directory, data_path)) == 'SECTION':
+      width = section._width
+      height = section._height
 
-      section = Section.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
-
-      #
-      # and now we create a view from it
-      # view = View.from_Section(section, 4)
-      # print 'txty sec', section._tx, section._ty
       view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
 
-      views.append(view)
+
+    if not view._data_path in self._views:
+      
+      #
+      # and to our views dictionary
+      #
+      self._views[view._data_path] = view
 
 
-    elif self.check_path_type(os.path.join(self._directory, data_path)) == 'SCAN':
+    meta_info = {}
+    meta_info['width'] = width / Constants.IMAGE_RATIO
+    meta_info['height'] = height / Constants.IMAGE_RATIO
+    meta_info['layer'] = 0
+    meta_info['minLevel'] = 0#zoomlevels[0]
+    meta_info['maxLevel'] = 1#maxLevel#zoomlevels[-1]
+    meta_info['tileSize'] = Constants.CLIENT_TILE_SIZE    
 
-      scan = Scan.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
 
-      for section in scan._sections:
-
-        view = View.create(os.path.join(data_path, section.id), section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
-
-        views.append(view)
     
-    
-    view_descriptors = []
 
-    for j,view in enumerate(views):
-
-      #
-      # we grab the width and height of the canvas of this view
-      # and calculate the zoomlevels
-      maxLevel = len(view.canvases) - 1
-      canvas = view.canvases[0]
-      width = canvas._width
-      height = canvas._height
-
-      # zoomlevels = range(int(math.log(width / Manager.THUMBNAIL_RATIO / Manager.PYRAMID_MIN_SIZE,2)) + 1)
-
-      view_descriptor = {}
-      view_descriptor['data_path'] = view._data_path
-      view_descriptor['width'] = width #/ Manager.THUMBNAIL_RATIO
-      view_descriptor['height'] = height #/ Manager.THUMBNAIL_RATIO
-      view_descriptor['layer'] = j
-      view_descriptor['minLevel'] = 0#zoomlevels[0]
-      view_descriptor['maxLevel'] = maxLevel#zoomlevels[-1]
-      view_descriptor['tileSize'] = Constants.CLIENT_TILE_SIZE
-      view_descriptors.append(view_descriptor)
-
-      #
-      # HERE, WE ADD THE VIEW TO OUR QUEUE
-      # BUT ONLY IF WE DO NOT HAVE THIS VIEW YET
-      #
-      if not view._data_path in self._views:
-        self._viewing_queue.append(view)
-        #
-        # and to our views dictionary
-        #
-        self._views[view._data_path] = view
-
-    return view_descriptors
+    return json.dumps(meta_info)
 
 
   def get_image(self, data_path, x, y, z, w):
     '''
+    Calculate which file(s) we need for the current openseadragon tile
+    and load them as well as downsample them on the fly.
     '''
-    # print data_path
-    image = self._views[data_path].canvases[w].pixels
-    ts = Constants.CLIENT_TILE_SIZE
-    # print image, image.shape
-    tile = image[y*ts:y*ts+ts,x*ts:x*ts+ts]
+
+    # print '-'*80
+    # print 'SD', data_path, x, y, z, w
+
+
+
+    if Constants.CACHE_CLIENT_TILES:
+      
+      osd_file_url = data_path.replace('/', '_') + '_' + str(x) + '_' + str(y) + '_' + str(z) + '_' + str(w) + '.jpg'
+      osd_file_url_full = os.path.join(Constants.CLIENT_TILE_CACHE_FOLDER, osd_file_url)
+
+      if os.path.exists(osd_file_url_full):
+
+        # we have this OSD tile cached on disk
+        # print 'OSD CACHE HIT'
+        osd_tile = cv2.imread(osd_file_url_full, 0)
+        return cv2.imencode('.jpg', osd_tile)[1].tostring()
+
+
+
+    view = self._views[data_path]
+
+    # calculate canvas coordinates
+    x_c = x*Constants.CLIENT_TILE_SIZE
+    y_c = y*Constants.CLIENT_TILE_SIZE
+    w_c = Constants.CLIENT_TILE_SIZE
+    h_c = Constants.CLIENT_TILE_SIZE
+
+    top_left = [x_c, y_c]
+    bottom_right = [x_c+w_c, y_c+h_c]
+
+    # loop through all tiles and find ones which match the x_c, y_c, w_c, h_c bounding box
+    required_tiles = {}
+    for t in view._tiles:
+      tile_dict = view._tiles[t]
+
+      tile = tile_dict['tile']
+      # now the normalized coordinates which should match the coordinate system
+      tx = tile_dict['tx'] / 2**w
+      ty = tile_dict['ty'] / 2**w
+      width = tile_dict['width'] / 2**w
+      height = tile_dict['height'] / 2**w
+      t_top_left = [tx, ty]
+      t_bottom_right = [tx+width, ty+height]
+
+      comp0 = top_left[0] < t_bottom_right[0]
+      comp1 = bottom_right[0] > t_top_left[0]
+      comp2 = top_left[1] < t_bottom_right[1]
+      comp3 = bottom_right[1] > t_top_left[1]
+
+      overlapping = comp0 and comp1 and comp2 and comp3
+
+      if overlapping:
+        required_tiles[t] = tile_dict
+
+    abs_data_path = os.path.join(self._directory, data_path)
+
+    stitched = np.zeros((Constants.CLIENT_TILE_SIZE, Constants.CLIENT_TILE_SIZE), dtype=np.uint8)
+
+
     if Constants.INVERT:
-      tile = (255-tile)
-    return cv2.imencode('.jpg', tile)[1].tostring()
+      stitched[:] = 255
 
+    # sort the required tiles to always give priority in the same order
+    required_tiles_keys = sorted(required_tiles, key=lambda key: required_tiles[key])
 
-  def on_drawing_fov_complete(self, view):
-    '''
-    This gets called from the drawer once a single FoV has been added to the view canvas.
-    '''
-    self._websocket_controller.send_refresh(view._data_path)
+    for t in required_tiles_keys:
 
+      tile_dict = required_tiles[t]
+      tile = tile_dict['tile']  
 
-  def on_drawing_view_complete(self, view):
-    '''
-    This gets called once the drawer finished a complete view canvas.
-    '''
-    self._active_workers.get() # reduce worker counter
+      # fov paths need to be treated differently
+      if len(view._fovs) > 1:
+        t_abs_data_path = os.path.join(abs_data_path, tile_dict['fov'])
+      else:
+        t_abs_data_path = abs_data_path
+
+      #
+      # NO CACHING FOR NOW
+      #
+
+      # print 'LOADING', os.path.join(t_abs_data_path, tile._filename)
+      if t in self._tiles:
+        if w in self._tiles[t]:
+          current_tile = self._tiles[t][w]
+          # print 'CACHE HIT'
+        else:
+          # tile there but not correct zoomlevel
+          tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+          current_tile = tile.downsample(2**w)
+          self._tiles[t][w] = tile._imagedata  
+      else: 
+        #
+        # we add to cache
+        #
+        if len(self._tiles.keys()) >= self._tile_cache_size:
+          # delete the first added item but only if the item is not the current tile
+          first_added_item = self._tiles.keys()[0]
+
+          if t != first_added_item:
+            # print 'FREEING'
+            del self._tiles[first_added_item]
+
+        tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+        current_tile = tile.downsample(2**w)
+        self._tiles[t] = {w:current_tile}
+
+      # stitch it in our little openseadragon tile
+      tx = tile_dict['tx'] / 2**w
+      ty = tile_dict['ty'] / 2**w
+      t_width = tile_dict['width'] / 2**w
+      t_height = tile_dict['height'] / 2**w
+
+      stitched_x = int(max(tx, top_left[0]) - top_left[0])
+      stitched_y = int(max(ty, top_left[1]) - top_left[1])
+
+      stitched_w = min(t_width - max(top_left[0] - tx, 0), Constants.CLIENT_TILE_SIZE-stitched_x)
+      stitched_h = min(t_height - max(top_left[1] - ty, 0), Constants.CLIENT_TILE_SIZE-stitched_y)
+
+      t_sub_x = int(max(tx, top_left[0]) - tx)
+      t_sub_y = int(max(ty, top_left[1]) - ty)
+
+      stitched[stitched_y:stitched_y+stitched_h, stitched_x:stitched_x+stitched_w] = current_tile[t_sub_y:t_sub_y+stitched_h, t_sub_x:t_sub_x+stitched_w]
+
+    if Constants.INVERT:
+      stitched = 255-stitched
+
+    if Constants.CACHE_CLIENT_TILES:
+      # print 'Writing OSD tile', osd_file_url_full
+      cv2.imwrite(osd_file_url_full, stitched)
+
+    return cv2.imencode('.jpg', stitched)[1].tostring()
 
 
   def tick(self):
@@ -230,31 +429,15 @@ class Manager(object):
     #
     # self.index() ### do not index all the time for now
 
-    #
-    # loop through cache
-    #
-    for canvas in CACHE:
-      canvas = CACHE[canvas]
-      delta = time.time() - canvas._last_used
-      if (delta >= Constants.CACHE_RESTING_TIME):
-        # we should free it here
-        canvas.free()
-
-
-    # do nothing more while workers are not available
-    if self._active_workers.full():
-      return    
-
-    if len(self._viewing_queue) != 0:
-      view = self._viewing_queue.pop(0)
-
-      # we now use a separate process to work on this view
-      args = (self, view)
-      worker = mp.Process(target=Drawer.run, args=args)
-      self._active_workers.put(1) # increase worker counter
-      print 'starting drawer', view
-      worker.start()
-
+    # #
+    # # loop through cache
+    # #
+    # for canvas in CACHE:
+    #   canvas = CACHE[canvas]
+    #   delta = time.time() - canvas._last_used
+    #   if (delta >= Constants.CACHE_RESTING_TIME):
+    #     # we should free it here
+    #     canvas.free()
 
 
     
