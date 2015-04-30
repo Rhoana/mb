@@ -225,6 +225,9 @@ D.manager.prototype.create_viewer = function(page, visible) {
       tileSources:   ts
     });
 
+  viewer.innerTracker.keyHandler = null;
+  viewer.innerTracker.keyDownHandler = null;
+
   // viewer.addHandler('tile-drawn', function(event,a) {
 
   //   console.log(event,a)
