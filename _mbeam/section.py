@@ -37,15 +37,6 @@ class Section(object):
   @property
   def id(self):
     return self._directory.strip(os.sep).split(os.sep)[-1]
-    # return os.path.basename(self._directory)
-
-  def force_update_bounding_box(self):
-    '''
-    '''
-    for f in self._fovs:
-      f.update_bounding_box()
-
-    self.update_bounding_box()
     
 
   def update_bounding_box(self):
@@ -80,7 +71,7 @@ class Section(object):
 
 
   @staticmethod
-  def from_directory(directory, file_prefix='', ratio_x=1, ratio_y=1, calculate_bounding_box=False):
+  def from_directory(directory, calculate_bounding_box=False):
     '''
     Loads a section from a directory without loading any images.
 

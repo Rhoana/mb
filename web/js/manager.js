@@ -161,7 +161,7 @@ D.manager.prototype.setup_controls = function() {
 
   // update sequence label
   if (this._content.length > 1) {
-    $('#section').html('Section 1/'+content.length);
+    $('#section').html('Section 1/'+this._content.length);
     $('.labels').show();
   }  
 
@@ -248,7 +248,7 @@ D.manager.prototype.move = function(sign) {
   var new_container = '#viewer_'+this._page;
   
   // 
-  this._controller._data = this._content[this._page].data_path;
+  this._data_path = this._content[this._page].data_path;
 
 
   if (sign > 0) {

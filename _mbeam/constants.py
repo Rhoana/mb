@@ -5,5 +5,5 @@ class Constants(object):
   METADATA_FILE = 'metadata.txt'
   IMAGE_PREFIX = 'thumbnail_'
   INVERT = True
-  CACHE_CLIENT_TILES = False
+  CACHE_CLIENT_TILES = True
   CLIENT_TILE_CACHE_FOLDER = '/tmp/'

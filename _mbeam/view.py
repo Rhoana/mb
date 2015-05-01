@@ -5,15 +5,13 @@ from constants import Constants
 
 class View(object):
 
-  def __init__(self, data_path, tx, ty, width, height, fovs, tiles, ratio_x=1, ratio_y=1):
+  def __init__(self, data_path, tx, ty, width, height, fovs, tiles):
     '''
     '''
     self._data_path = data_path
     
     self._fovs = fovs
     self._tiles = tiles
-    self._ratio_x = ratio_x
-    self._ratio_y = ratio_y
 
     self._tx = tx
     self._ty = ty
@@ -32,13 +30,19 @@ class View(object):
   def create(data_path, fovs, width, height, tx, ty):
     '''
     '''
-    print data_path
     # we need to probe one tile and compare it to the full-res tile
     # to get the floating point ratio in x and y between tile and full-res
     fovs[0].update_bounding_box()
-    print fovs
+
     first_tile = fovs[0]._tiles[fovs[0]._tiles.keys()[0]]
-    first_tile.load(data_path, Constants.IMAGE_PREFIX)
+    
+    # fov paths need to be treated differently
+    if len(fovs) > 1:
+      t_abs_data_path = os.path.join(data_path, fovs[0].id)
+    else:
+      t_abs_data_path = data_path
+
+    first_tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
     ratio_x = first_tile.width / float(first_tile._imagedata.shape[1])
     ratio_y = first_tile.height / float(first_tile._imagedata.shape[0])
 
@@ -48,14 +52,13 @@ class View(object):
     w_ty = ty / ratio_y
 
 
-    print w_width, w_height, ratio_x, ratio_y
-
     # now create the normalized index of all involved tiles
     tiles = {}
 
     for fov in fovs:
 
       for t in fov._tiles:
+
         t = fov._tiles[t]
         normalized_tx = t._tx / ratio_x - w_tx
         normalized_ty = t._ty / ratio_y - w_ty
@@ -67,5 +70,5 @@ class View(object):
     #
     # create a new View
     #
-    return View(data_path, w_tx, w_ty, w_width, w_height, fovs, tiles, ratio_x, ratio_y)
+    return View(data_path, w_tx, w_ty, w_width, w_height, fovs, tiles)
 

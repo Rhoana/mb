@@ -12,6 +12,9 @@ class FoV(object):
     '''
     self._directory = directory
 
+    self._metadata = None
+    self._tiles = None
+
     self._tx = -1
     self._ty = -1
     self._width = -1
@@ -105,7 +108,7 @@ class FoV(object):
     width = maxX - minX + image.width
     height = maxY - minY + image.height
 
-    print width, height
+    # print width, height
 
     self._tx = minX
     self._ty = minY

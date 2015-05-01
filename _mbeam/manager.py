@@ -97,40 +97,42 @@ class Manager(object):
     Get meta information for a requested data path.
     '''
 
-    # detect if this is a section or fov
-    if self.check_path_type(data_path) == 'FOV':
-      # this is a FoV
-      fov = FoV.from_directory(data_path, True)
+    if not data_path in self._views:
+        
+      # detect if this is a section or fov
+      if self.check_path_type(data_path) == 'FOV':
+        # this is a FoV
+        fov = FoV.from_directory(data_path, True)
 
-      width = fov._width
-      height = fov._height
+        width = fov._width
+        height = fov._height
 
-      view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty)
+        view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty)
 
-    elif self.check_path_type(data_path) == 'SECTION':
+      elif self.check_path_type(data_path) == 'SECTION':
 
-      section = Section.from_directory(data_path, True)
+        section = Section.from_directory(data_path, True)
 
-      width = section._width
-      height = section._height
+        width = section._width
+        height = section._height
 
-      view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty)
+        view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty)
 
-
-    if not view._data_path in self._views:
-      
       #
-      # and to our views dictionary
+      # and add to our views dictionary
       #
-      self._views[view._data_path] = view
+      self._views[data_path] = view
 
+    else:
+
+      view = self._views[data_path]
 
     meta_info = {}
     meta_info['width'] = view._width
     meta_info['height'] = view._height
     meta_info['layer'] = 0
     meta_info['minLevel'] = 0
-    meta_info['maxLevel'] = 0
+    meta_info['maxLevel'] = 1
     meta_info['tileSize'] = Constants.CLIENT_TILE_SIZE
 
     return meta_info
@@ -196,8 +198,8 @@ class Manager(object):
       if overlapping:
         required_tiles[t] = tile_dict
 
-    stitched_w = min(view._width-x_c, Constants.CLIENT_TILE_SIZE)
-    stitched_h = min(view._height-y_c, Constants.CLIENT_TILE_SIZE)
+    stitched_w = min(view._width / 2**w -x_c, Constants.CLIENT_TILE_SIZE)
+    stitched_h = min(view._height / 2**w -y_c, Constants.CLIENT_TILE_SIZE)
 
     stitched = np.zeros((stitched_h, stitched_w), dtype=np.uint8)
 
@@ -219,10 +221,6 @@ class Manager(object):
       else:
         t_abs_data_path = data_path
 
-      #
-      # NO CACHING FOR NOW
-      #
-
       # print 'LOADING', os.path.join(t_abs_data_path, tile._filename)
       if t in self._tiles:
         if w in self._tiles[t]:
@@ -230,7 +228,7 @@ class Manager(object):
           # print 'CACHE HIT'
         else:
           # tile there but not correct zoomlevel
-          tile.load(data_path, Constants.IMAGE_PREFIX)
+          tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
           current_tile = tile.downsample(2**w)
           self._tiles[t][w] = tile._imagedata  
       else: 
@@ -245,7 +243,7 @@ class Manager(object):
             # print 'FREEING'
             del self._tiles[first_added_item]
 
-        tile.load(data_path, Constants.IMAGE_PREFIX)
+        tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
         current_tile = tile.downsample(2**w)
         self._tiles[t] = {w:current_tile}
 
@@ -258,8 +256,9 @@ class Manager(object):
       stitched_x = int(max(tx, top_left[0]) - top_left[0])
       stitched_y = int(max(ty, top_left[1]) - top_left[1])
 
-      stitched_w = min(t_width - max(top_left[0] - tx, 0), Constants.CLIENT_TILE_SIZE-stitched_x)
-      stitched_h = min(t_height - max(top_left[1] - ty, 0), Constants.CLIENT_TILE_SIZE-stitched_y)
+      stitched_w = int(min(t_width - max(top_left[0] - tx, 0), Constants.CLIENT_TILE_SIZE-stitched_x))
+      stitched_h = int(min(t_height - max(top_left[1] - ty, 0), Constants.CLIENT_TILE_SIZE-stitched_y))
+
 
       t_sub_x = int(max(tx, top_left[0]) - tx)
       t_sub_y = int(max(ty, top_left[1]) - ty)
