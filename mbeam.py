@@ -32,7 +32,7 @@ if __name__ == "__main__":
   if len(sys.argv) == 3:
     port = sys.argv[2]
 
-  manager = _mbeam.Manager(input_dir)
+  manager = _mbeam.Manager()
   manager.start()
 
   webserver = _mbeam.WebServer(manager, port)

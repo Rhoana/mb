@@ -38,7 +38,7 @@ class Tile(object):
   def height(self, value):
     self._height = value
   
-  def load(self, directory, file_prefix='', ratio=1):
+  def load(self, directory, file_prefix='', ratio_x=1, ratio_y=1):
     '''
     '''
     # print 'LOADING',os.path.join(directory, file_prefix + self._filename) 
@@ -50,7 +50,7 @@ class Tile(object):
     #   print 'AAAAAAA', os.path.join(directory, file_prefix + self._filename)
 
 
-    self._imagedata = imagedata[0:self.height/ratio, 0:self.width/ratio]
+    self._imagedata = imagedata#[0:self.height/ratio_y, 0:self.width/ratio]
 
   def downsample(self, factor):
     '''

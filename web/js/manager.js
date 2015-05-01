@@ -2,15 +2,14 @@ var D = D || {};
 
 D.manager = function() {
 
-  this._websocket = null;
-  this._controller = new D.controller(this);
+  this._data_path = null;
 
-  this._viewers = [];
-
+  // the three OSD viewers for prev, current and next
   this._prev_viewer = null;
   this._viewer = null;
   this._next_viewer = null;
 
+  // the contrast value
   this._contrast = 10;
 
   this.init();
@@ -23,17 +22,148 @@ D.manager.prototype.init = function() {
   var args = UTIL.parse_args();
 
   if (args['data']) {
-    this._controller._data = args['data'];
+
+    this._data_path = args['data'];
+
+    // get the contents for the data path
+    var contents = $.ajax({
+        type: "GET",
+        url: 'content/' + this._data_path
+      }).done(function() {
+        
+        // setup the viewer
+        this.setup_viewer(JSON.parse(contents.responseText));
+
+        // and the controls
+        this.setup_controls();
+
+      }.bind(this));
+
   }
-
-
-  this._websocket = new D.websocket(this);
-
-  this.setup_controls();
 
 };
 
+
+D.manager.prototype.setup_viewer = function(content) {
+
+  this._content = content;
+  console.log(content)
+
+  for (var i=0; i<content.length; i++) {
+
+    content[i].meta_info_url = 'metainfo/' + content[i].data_path;
+
+    content[i].getTileUrl = function( level, x, y ) {
+      // in openseadragon:
+      // 0: smallest
+      // for us, 0 is the largest
+      level = this.maxLevel - level;
+
+      return "data/" + this.data_path + '/' + level + "-" + x + "-" + y + "-" + this.layer;
+    
+    }
+
+  }
+
+  this._page = 0;
+
+  this._viewer = this.create_viewer(this._page, true);
+
+  if (content.length > 1) {
+    this._next_viewer = this.create_viewer(this._page+1, false);
+  }
+
+  // update data_path in the controller
+  this._data_path = content[0].data_path;
+
+};
+
+
+
+D.manager.prototype.create_viewer = function(page, visible) {
+  
+  // create dom element
+  var container_id = 'viewer_'+page;
+  if (!visible) {
+    var style = 'z-index:0'//display:none';
+  } else {
+    var style = 'z-index:1';
+  }
+
+  $('#viewers').append('<div id="'+container_id+'" class="viewers" style="'+style+'"></div>');
+
+  var ts = this._content[page];
+
+  var meta_info = $.ajax({
+    type: "GET",
+    url: ts.meta_info_url,
+    async: false
+  }).responseText;
+
+  meta_info = JSON.parse(meta_info);
+
+  ts.width = meta_info.width;
+  ts.height = meta_info.height;
+  ts.minLevel = meta_info.minLevel;
+  ts.maxLevel = meta_info.maxLevel;
+  ts.tileSize = meta_info.tileSize;
+  ts.layer = meta_info.layer;
+
+
+  var viewer = OpenSeadragon({
+      id:            container_id,
+      prefixUrl:     "images/",
+      navigatorSizeRatio: 0.25,
+      maxZoomPixelRatio: 10,
+      showNavigationControl: false,
+      imageLoaderLimit: 3,
+      tileSources:   ts
+    });
+
+  viewer.innerTracker.keyHandler = null;
+  viewer.innerTracker.keyDownHandler = null;
+
+  // keyboard (needs to be rebound to overwrite OSD)
+  window.onkeydown = this.onkeydown.bind(this);
+
+  return viewer;  
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 D.manager.prototype.setup_controls = function() {
+
+  // update sequence label
+  if (this._content.length > 1) {
+    $('#section').html('Section 1/'+content.length);
+    $('.labels').show();
+  }  
 
   $("#contrast").slider({
     range: "min",
@@ -41,7 +171,6 @@ D.manager.prototype.setup_controls = function() {
     max: 100,
     value: 10,
     slide: function(e, ui) {
-      // $("#c_currentVal").html(ui.value);
       MANAGER._contrast = ui.value;
       MANAGER.update_parameters();
     }
@@ -81,85 +210,7 @@ D.manager.prototype.update_parameters = function() {
 
 };
 
-D.manager.prototype.update_tree = function(data) {
 
-  $('#nav').tree({
-    data: data,
-    autoOpen: 0
-  });
-
-};
-
-D.manager.prototype.setup_viewer = function(content) {
-
-  this._content = content;
-
-  // update sequence label
-  if (content.length > 1) {
-    $('#section').html('Section 1/'+content.length);
-    $('.labels').show();
-  }
-
-  for (var i=0; i<content.length; i++) {
-
-    var that = this;
-
-    // content[i].getTileUrl = function( a,b,c ) {
-    //   console.log(a,b,c)
-
-    // }
-
-    content[i].meta_info_url = 'metainfo/' + content[i].data_path;
-    // content[i].getImageInfo = function(url) {
-
-    //   var meta_info = $.ajax({
-    //     type: "GET",
-    //     url: url,
-    //     async: false
-    //   }).responseText;
-
-    //   meta_info = JSON.parse(meta_info);
-
-    //   this.width = meta_info.width;
-    //   this.height = meta_info.height;
-    //   this.minLevel = meta_info.minLevel;
-    //   this.maxLevel = meta_info.maxLevel;
-    //   this.tileSize = meta_info.tileSize;
-    //   this.layer = meta_info.layer;
-
-
-    //   console.log()
-    //   // return url;
-    // }
-
-    content[i].getTileUrl = function( level, x, y ) {
-      // in openseadragon:
-      // 0: smallest
-      // for us, 0 is the largest
-      level = this.maxLevel - level;
-
-      return "data/" + this.data_path + '/' + level + "-" + x + "-" + y + "-" + this.layer;
-    
-    }
-
-  }
-
-  this._page = 0;
-
-  this._viewer = this.create_viewer(this._page, true);
-
-  // this._viewer.addHandler('pan', this.propagate_viewport.bind(this));
-  // this._viewer.addHandler('zoom', this.propagate_viewport.bind(this));
-
-
-  if (content.length > 1) {
-    this._next_viewer = this.create_viewer(this._page+1, false);
-  }
-
-  // update data_path in the controller
-  this._controller._data = content[0].data_path;
-
-};
 
 
 D.manager.prototype.propagate_viewport = function(event) {
@@ -177,67 +228,6 @@ D.manager.prototype.propagate_viewport = function(event) {
     this._next_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
     this._next_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
   }
-
-};
-
-
-D.manager.prototype.create_viewer = function(page, visible) {
-  
-  // create dom element
-  var container_id = 'viewer_'+page;
-  if (!visible) {
-    var style = 'z-index:0'//display:none';
-  } else {
-    var style = 'z-index:1';
-  }
-
-  $('#viewers').append('<div id="'+container_id+'" class="viewers" style="'+style+'"></div>');
-
-  var ts = this._content[page];
-
-
-  var meta_info = $.ajax({
-    type: "GET",
-    url: ts.meta_info_url,
-    async: false
-  }).responseText;
-
-  meta_info = JSON.parse(meta_info);
-
-  ts.width = meta_info.width;
-  ts.height = meta_info.height;
-  ts.minLevel = meta_info.minLevel;
-  ts.maxLevel = meta_info.maxLevel;
-  ts.tileSize = meta_info.tileSize;
-  ts.layer = meta_info.layer;
-
-
-  var viewer = OpenSeadragon({
-      id:            container_id,
-      prefixUrl:     "images/",
-      navigatorSizeRatio: 0.25,
-      // preserveViewport: true,
-      // sequenceMode:   false,
-      maxZoomPixelRatio: 10,
-      showNavigationControl: false,
-      imageLoaderLimit: 3,
-      // showNavigator: true,
-      tileSources:   ts
-    });
-
-  viewer.innerTracker.keyHandler = null;
-  viewer.innerTracker.keyDownHandler = null;
-
-  // viewer.addHandler('tile-drawn', function(event,a) {
-
-  //   console.log(event,a)
-
-  // }.bind(this));
-
-  // keyboard (needs to be rebound to overwrite OSD)
-  window.onkeypress = window.onkeydown = this.onkeydown.bind(this);
-
-  return viewer;  
 
 };
 

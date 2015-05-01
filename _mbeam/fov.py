@@ -7,14 +7,10 @@ from tile import Tile
 
 class FoV(object):
 
-  def __init__(self, directory, metadata, images, file_prefix='', ratio=1, calculate_bounding_box=False):
+  def __init__(self, directory, calculate_bounding_box=False):
     '''
     '''
     self._directory = directory
-    self._metadata = metadata
-    self._tiles = images
-    self._file_prefix = file_prefix
-    self._ratio = ratio
 
     self._tx = -1
     self._ty = -1
@@ -36,7 +32,6 @@ class FoV(object):
   @property
   def id(self):
     return self._directory.strip(os.sep).split(os.sep)[-1]
-    # return os.path.basename(self._directory)
 
 
   def update_bounding_box(self):
@@ -104,11 +99,13 @@ class FoV(object):
       image = self._tiles[i]
       minX = min(minX, image._tx)
       minY = min(minY, image._ty)
-      maxX = max(maxX, image._tx + image.width)
-      maxY = max(maxY, image._ty + image.height)
+      maxX = max(maxX, image._tx)
+      maxY = max(maxY, image._ty)
 
-    width = maxX - minX
-    height = maxY - minY
+    width = maxX - minX + image.width
+    height = maxY - minY + image.height
+
+    print width, height
 
     self._tx = minX
     self._ty = minY
@@ -128,7 +125,7 @@ class FoV(object):
 
 
   @staticmethod
-  def from_directory(directory, file_prefix='', ratio=1, calculate_bounding_box=False):
+  def from_directory(directory, calculate_bounding_box=False):
     '''
     Loads image_coordinates.txt and metadata.txt from
     a given directory but does not load any images.
@@ -145,8 +142,5 @@ class FoV(object):
     if not os.path.exists(metadata_file) or not os.path.exists(image_coordinates_file):
       return None
 
-    metadata = None
-    tiles = None
-
-    fov = FoV(directory, metadata, tiles, file_prefix, ratio, calculate_bounding_box)
+    fov = FoV(directory, calculate_bounding_box)
     return fov

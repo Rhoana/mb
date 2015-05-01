@@ -80,7 +80,7 @@ class Section(object):
 
 
   @staticmethod
-  def from_directory(directory, file_prefix='', ratio=1, calculate_bounding_box=False):
+  def from_directory(directory, file_prefix='', ratio_x=1, ratio_y=1, calculate_bounding_box=False):
     '''
     Loads a section from a directory without loading any images.
 
@@ -97,7 +97,7 @@ class Section(object):
         # fovs always reside in directories
         continue
 
-      fov = FoV.from_directory(fov_path, file_prefix, ratio, calculate_bounding_box)
+      fov = FoV.from_directory(fov_path, calculate_bounding_box)
       if fov:
         fovs.append(fov)
 
