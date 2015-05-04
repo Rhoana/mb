@@ -83,7 +83,6 @@ class FoV(object):
         tile.width = width
         tile.height = height
         tiles[tile.id] = tile
-        #image.load_thumbnail(directory) # load the small representation
 
 
     self._tiles = tiles
@@ -107,8 +106,6 @@ class FoV(object):
 
     width = maxX - minX + image.width
     height = maxY - minY + image.height
-
-    # print width, height
 
     self._tx = minX
     self._ty = minY

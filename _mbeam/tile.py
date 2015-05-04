@@ -43,14 +43,7 @@ class Tile(object):
     '''
     # print 'LOADING',os.path.join(directory, file_prefix + self._filename) 
 
-    imagedata = cv2.imread(os.path.join(directory, file_prefix + self._filename), 0) # this is grayscale loading with any OpenCV version
-
-
-    # if not imagedata:
-    #   print 'AAAAAAA', os.path.join(directory, file_prefix + self._filename)
-
-
-    self._imagedata = imagedata#[0:self.height/ratio_y, 0:self.width/ratio]
+    self._imagedata = cv2.imread(os.path.join(directory, file_prefix + self._filename), 0) # this is grayscale loading with any OpenCV version
 
   def downsample(self, factor):
     '''
