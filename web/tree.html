@@ -15,7 +15,19 @@
 
     window.onload = function() {
 
-      $('#nav').tree({});
+      $('#nav').tree({
+
+        onCreateLi: function(node, $li) {
+            // Append a link to the jqtree-element div.
+            // The link has an url '#node-[id]' and a data property 'node-id'.
+            console.log(node);
+            $li.find('.jqtree-element').append(
+                '&nbsp;&nbsp;<a href="?data='+node.full_url+'"><img style="vertical-align:middle" src="gfx/'+node.type+'.gif"></a>'
+            );
+        }
+
+
+      });
 
     }
 
