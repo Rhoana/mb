@@ -63,6 +63,29 @@ class Manager(object):
       level += 1
 
 
+  def get_tree(self, data_path):
+    '''
+    '''
+
+    dir_content = os.listdir(data_path)
+
+    dir_listing = []
+
+    for c in dir_content:
+
+      if not os.path.isdir(os.path.join(data_path, c)):
+        continue
+
+      entry = {}
+      entry['label'] = c
+      entry['id'] = os.path.join(data_path, c)
+      entry['load_on_demand'] = True
+
+      dir_listing.append(entry)
+
+    return dir_listing
+
+
   def get_content(self, data_path):
     '''
     Sends the content listing for a given path. This detects if the path is scan, section or fov.

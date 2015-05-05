@@ -6,6 +6,7 @@ import tornado
 import tornado.gen
 import tornado.web
 import tornado.websocket
+import urllib
 
 
 class WebServerHandler(tornado.web.RequestHandler):
@@ -38,6 +39,7 @@ class WebServer:
 
     webapp = tornado.web.Application([
       
+      (r'/tree/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/content/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/metainfo/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/data/(.*)', WebServerHandler, dict(webserver=self)),
@@ -61,7 +63,18 @@ class WebServer:
 
     path = '/'.join(splitted_request[2:])
 
-    if splitted_request[1] == 'content':
+    if splitted_request[1] == 'tree':
+
+      data_path = path.split('?')[0]
+      parameters = path.split('?')[1].split('&')
+      
+      if parameters[0][0] != '_':
+        data_path = urllib.unquote(parameters[0].split('=')[1])
+      
+      content = json.dumps(self._manager.get_tree(data_path))
+      content_type = 'text/html'
+
+    elif splitted_request[1] == 'content':
 
       content = json.dumps(self._manager.get_content(path))
       content_type = 'text/html'
