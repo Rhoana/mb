@@ -1,4 +1,5 @@
 import cv2
+import glob
 import json
 import math
 import multiprocessing as mp
@@ -63,6 +64,28 @@ class Manager(object):
       level += 1
 
 
+  def fast_check_path_type(self, data_path):
+    '''
+    '''
+
+    mfov_glob = glob.glob(os.path.join(data_path, Constants.IMAGE_COORDINATES_FILE))
+
+    if len(mfov_glob) > 0:
+      return 'FOV'
+
+    section_glob = glob.glob(data_path + os.sep + '*' + os.sep + Constants.IMAGE_COORDINATES_FILE)
+
+    if len(section_glob) > 0:
+      return 'SECTION'
+
+    scan_glob = glob.glob(data_path + os.sep + '*' + os.sep + '*' + os.sep + Constants.IMAGE_COORDINATES_FILE)    
+
+    if len(scan_glob) > 0:
+      return 'SCAN'
+
+    return None
+
+
   def get_tree(self, data_path):
     '''
     '''
@@ -78,7 +101,7 @@ class Manager(object):
       if not os.path.isdir(full_url):
         continue
 
-      dir_type = self.check_path_type(full_url)
+      dir_type = self.fast_check_path_type(full_url)
 
       if not dir_type:
         dir_type = 'NULL'
