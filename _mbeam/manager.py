@@ -67,7 +67,7 @@ class Manager(object):
     '''
     '''
 
-    dir_content = os.listdir(data_path)
+    dir_content = sorted(os.listdir(data_path))
 
     dir_listing = []
 
