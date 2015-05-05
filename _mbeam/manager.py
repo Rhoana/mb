@@ -73,15 +73,15 @@ class Manager(object):
     if len(mfov_glob) > 0:
       return 'FOV'
 
-    section_glob = glob.glob(data_path + os.sep + '*' + os.sep + Constants.IMAGE_COORDINATES_FILE)
+    # section_glob = glob.glob(data_path + os.sep + '*' + os.sep + Constants.IMAGE_COORDINATES_FILE)
 
-    if len(section_glob) > 0:
-      return 'SECTION'
+    # if len(section_glob) > 0:
+    #   return 'SECTION'
 
-    scan_glob = glob.glob(data_path + os.sep + '*' + os.sep + '*' + os.sep + Constants.IMAGE_COORDINATES_FILE)    
+    # scan_glob = glob.glob(data_path + os.sep + '*' + os.sep + '*' + os.sep + Constants.IMAGE_COORDINATES_FILE)    
 
-    if len(scan_glob) > 0:
-      return 'SCAN'
+    # if len(scan_glob) > 0:
+    #   return 'SCAN'
 
     return None
 
