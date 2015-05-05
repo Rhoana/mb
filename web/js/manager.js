@@ -23,23 +23,100 @@ D.manager.prototype.init = function() {
 
   if (args['data']) {
 
-    this._data_path = args['data'];
+    // directly view data
+    this.view(args['data']);
 
-    // get the contents for the data path
-    var contents = $.ajax({
-        type: "GET",
-        url: 'content/' + this._data_path
-      }).done(function() {
-        
-        // setup the viewer
-        this.setup_viewer(JSON.parse(contents.responseText));
+  } else {
 
-        // and the controls
-        this.setup_controls();
-
-      }.bind(this));
+    // show tree view
+    this.setup_tree();
 
   }
+
+};
+
+
+D.manager.prototype.view = function(data_path) {
+
+  if (this._data_path) {
+
+    // we have data loaded - reset everything
+
+    if (this._prev_viewer) {
+      this._prev_viewer.destroy();
+    }
+    this._prev_viewer = null;
+
+    if (this._viewer) {
+      this._viewer.destroy();
+    }
+    this._viewer = null;
+
+    if (this._next_viewer) {
+      this._next_viewer.destroy();
+    }
+    this._next_viewer = null;
+
+    $('#viewers').html("");
+
+    // the contrast value
+    this._contrast = 10;
+
+    this.setup_controls();
+
+  }
+
+  this._data_path = data_path;
+
+  // get the contents for the data path
+  var contents = $.ajax({
+      type: "GET",
+      url: 'content/' + this._data_path
+    }).done(function() {
+      
+      // setup the viewer
+      this.setup_viewer(JSON.parse(contents.responseText));
+
+      // and the controls
+      this.setup_controls();
+
+    }.bind(this));
+
+};
+
+
+D.manager.prototype.setup_tree = function() {
+
+
+  var tree = $('#nav').tree({});
+
+
+  tree.bind(
+      'tree.click', 
+      function(e) {
+
+        var node = e.node;
+        var element = e.node.element;
+
+        // if (node.type == "NULL") {
+
+
+          var r = $.ajax({
+            url: 'type/' + node.full_url,
+            type: 'GET'
+          }).done(function() {
+
+            node.type = r.responseText;
+            
+            if (element.children[0].children.length == 2) {
+              $(element.children[0]).append("&nbsp;&nbsp;<img style='vertical-align:middle' src='gfx/"+node.type+".gif' onclick='MANAGER.view(\""+node.full_url+"\")'>");
+            }
+
+          });
+
+      }
+
+    );  
 
 };
 
@@ -132,38 +209,15 @@ D.manager.prototype.create_viewer = function(page, visible) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 D.manager.prototype.setup_controls = function() {
 
   // update sequence label
   if (this._content.length > 1) {
     $('#section').html('Section 1/'+this._content.length);
     $('.labels').show();
-  }  
+  } else {
+    $('.labels').hide();
+  }
 
   $("#contrast").slider({
     range: "min",
