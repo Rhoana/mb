@@ -91,14 +91,14 @@ class Manager(object):
       if not os.path.isdir(full_url):
         continue
 
-      dir_type = self.fast_check_path_type(full_url)
+      # dir_type = self.fast_check_path_type(full_url)
 
-      if not dir_type:
-        dir_type = 'NULL'
+      # if not dir_type:
+      #   dir_type = 'NULL'
 
       entry = {}
       entry['label'] = c
-      entry['type'] = dir_type
+      # entry['type'] = dir_type
       entry['full_url'] = full_url
       entry['id'] = os.path.join(data_path, c)
       entry['load_on_demand'] = True
