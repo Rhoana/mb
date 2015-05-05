@@ -80,6 +80,8 @@ D.manager.prototype.view = function(data_path) {
       // and the controls
       this.setup_controls();
 
+      $('#data_path').html(data_path);
+
     }.bind(this));
 
 };
@@ -121,7 +123,11 @@ D.manager.prototype.setup_tree = function() {
   $('#nav').slimScroll({
     height: '100%',
     color: 'deepskyblue'
-  })
+  });
+
+  $('#treeicon').on('click', function(){
+    $('#nav_container').toggle('slide', {direction: 'left'}, 500);
+  });
 
 };
 
