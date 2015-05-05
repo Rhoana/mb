@@ -71,6 +71,8 @@ class WebServer:
       
       if parameters[0][0] != '_':
         data_path = urllib.unquote(parameters[0].split('=')[1])
+      else:
+        data_path = None
       
       content = json.dumps(self._manager.get_tree(data_path))
       content_type = 'text/html'

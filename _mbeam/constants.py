@@ -7,4 +7,5 @@ class Constants(object):
   INVERT = True
   CACHE_CLIENT_TILES = True
   CLIENT_TILE_CACHE_FOLDER = '/tmp/'
+  DEFAULT_DATA_FOLDER = '/Users/d/Desktop/data/'
   

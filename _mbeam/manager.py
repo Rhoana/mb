@@ -80,6 +80,9 @@ class Manager(object):
     '''
     '''
 
+    if not data_path:
+      data_path = Constants.DEFAULT_DATA_FOLDER
+
     dir_content = sorted(os.listdir(data_path))
 
     dir_listing = []
