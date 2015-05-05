@@ -33,7 +33,6 @@ class Manager(object):
     '''
     pass
 
-
   def check_path_type(self, data_path):
     '''
     Check whether the data_path is a scan, section or fov.
@@ -64,18 +63,6 @@ class Manager(object):
       level += 1
 
 
-  def fast_check_path_type(self, data_path):
-    '''
-    '''
-
-    mfov_file = os.path.exists(os.path.join(data_path, Constants.IMAGE_COORDINATES_FILE))
-
-    if mfov_file:
-      return 'FOV'
-
-    return None
-
-
   def get_tree(self, data_path):
     '''
     '''
@@ -94,14 +81,8 @@ class Manager(object):
       if not os.path.isdir(full_url):
         continue
 
-      # dir_type = self.fast_check_path_type(full_url)
-
-      # if not dir_type:
-      #   dir_type = 'NULL'
-
       entry = {}
       entry['label'] = c
-      # entry['type'] = dir_type
       entry['full_url'] = full_url
       entry['id'] = os.path.join(data_path, c)
       entry['load_on_demand'] = True
@@ -155,7 +136,7 @@ class Manager(object):
         width = fov._width
         height = fov._height
 
-        view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty)
+        view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty, self)
 
       elif self.check_path_type(data_path) == 'SECTION':
 
@@ -164,7 +145,7 @@ class Manager(object):
         width = section._width
         height = section._height
 
-        view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty)
+        view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty, self)
 
       #
       # and add to our views dictionary
@@ -264,7 +245,7 @@ class Manager(object):
       tile = tile_dict['tile']  
 
       # fov paths need to be treated differently
-      if len(view._fovs) > 1:
+      if self.check_path_type(data_path) != 'FOV':
         t_abs_data_path = os.path.join(data_path, tile_dict['fov'])
       else:
         t_abs_data_path = data_path
@@ -292,6 +273,7 @@ class Manager(object):
             del self._tiles[first_added_item]
 
         tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
+
         current_tile = tile.downsample(2**w)
         self._tiles[t] = {w:current_tile}
 

@@ -27,7 +27,7 @@ class View(object):
 
 
   @staticmethod
-  def create(data_path, fovs, width, height, tx, ty):
+  def create(data_path, fovs, width, height, tx, ty, manager):
     '''
     '''
     # we need to probe one tile and compare it to the full-res tile
@@ -37,12 +37,13 @@ class View(object):
     first_tile = fovs[0]._tiles[fovs[0]._tiles.keys()[0]]
     
     # fov paths need to be treated differently
-    if len(fovs) > 1:
+    if manager.check_path_type(data_path) != 'FOV':
       t_abs_data_path = os.path.join(data_path, fovs[0].id)
     else:
       t_abs_data_path = data_path
 
     first_tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
+
     ratio_x = first_tile.width / float(first_tile._imagedata.shape[1])
     ratio_y = first_tile.height / float(first_tile._imagedata.shape[0])
 
