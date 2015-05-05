@@ -68,25 +68,10 @@ class Manager(object):
     '''
     '''
 
-    mfov_glob = glob.glob(os.path.join(data_path, Constants.IMAGE_COORDINATES_FILE))
+    mfov_file = os.path.exists(os.path.join(data_path, Constants.IMAGE_COORDINATES_FILE))
 
-    if len(mfov_glob) > 0:
+    if mfov_file:
       return 'FOV'
-
-    first_sub_dirs = next(os.walk(data_path))[1]
-    if len(first_sub_dirs) > 0:
-
-      section_glob = glob.glob(os.path.join(data_path, first_sub_dirs[0], Constants.IMAGE_COORDINATES_FILE))
-
-    # section_glob = glob.glob(data_path + os.sep + '*' + os.sep + Constants.IMAGE_COORDINATES_FILE)
-
-      if len(section_glob) > 0:
-        return 'SECTION'
-
-    # scan_glob = glob.glob(data_path + os.sep + '*' + os.sep + '*' + os.sep + Constants.IMAGE_COORDINATES_FILE)    
-
-    # if len(scan_glob) > 0:
-    #   return 'SCAN'
 
     return None
 

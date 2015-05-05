@@ -40,6 +40,7 @@ class WebServer:
     webapp = tornado.web.Application([
       
       (r'/tree/(.*)', WebServerHandler, dict(webserver=self)),
+      (r'/type/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/content/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/metainfo/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/data/(.*)', WebServerHandler, dict(webserver=self)),
@@ -72,6 +73,13 @@ class WebServer:
         data_path = urllib.unquote(parameters[0].split('=')[1])
       
       content = json.dumps(self._manager.get_tree(data_path))
+      content_type = 'text/html'
+
+    elif splitted_request[1] == 'type':
+
+      content = self._manager.check_path_type(path)
+      if not content:
+        content = 'NULL'
       content_type = 'text/html'
 
     elif splitted_request[1] == 'content':
