@@ -118,6 +118,11 @@ D.manager.prototype.setup_tree = function() {
 
     );  
 
+  $('#nav').slimScroll({
+    height: '100%',
+    color: 'deepskyblue'
+  })
+
 };
 
 
