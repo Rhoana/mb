@@ -28,7 +28,7 @@ ul.jqtree-tree li.jqtree_common {
 ul.jqtree-tree .jqtree-toggler {
     border-bottom: none;
     color: white;
-    font-size: 0.3em;
+    font-size: 8px;
     text-decoration: none;
     margin-right: 0.5em;
     vertical-align: middle;

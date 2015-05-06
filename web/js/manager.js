@@ -47,6 +47,12 @@ D.manager.prototype.init = function() {
 
     }
 
+    if (args['contrast']) {
+
+      this._contrast = args['contrast'];
+
+    }
+
   }
 
 };
@@ -95,6 +101,7 @@ D.manager.prototype.view = function(data_path) {
 
       // and the controls
       this.setup_controls();
+      this.update_parameters();
 
       $('#data_path').html(data_path);
 
@@ -244,7 +251,7 @@ D.manager.prototype.create_viewer = function(page, visible) {
 D.manager.prototype.setup_controls = function() {
 
   // update sequence label
-  if (this._content.length > 1) {
+  if (this._content && this._content.length > 1) {
     $('#section').html('Section 1/'+this._content.length);
     $('.labels').show();
   } else {
@@ -255,7 +262,7 @@ D.manager.prototype.setup_controls = function() {
     range: "min",
     min: 10,
     max: 100,
-    value: 10,
+    value: this._contrast,
     slide: function(e, ui) {
       MANAGER._contrast = ui.value;
       MANAGER.update_parameters();
@@ -289,10 +296,15 @@ D.manager.prototype.onkeydown = function(e) {
 
 D.manager.prototype.update_parameters = function() {
 
-  $('#section').html('Section '+(this._page+1)+'/'+this._content.length);
+  if (this._content) {
+    $('#section').html('Section '+(this._page+1)+'/'+this._content.length);
+  }
 
 
-  $(MANAGER._viewer.canvas.children[0]).css('webkit-filter','contrast('+(this._contrast)/10+')');
+  $(this._viewer.canvas.children[0]).css('webkit-filter','contrast('+(this._contrast)/10+')');
+  $(this._viewer.canvas.children[0]).css('filter','contrast('+(this._contrast)/10+')');
+
+  this.store_viewpoint();
 
 };
 
@@ -332,7 +344,7 @@ D.manager.prototype.store_viewpoint = function(event) {
   var center = this._viewer.viewport.getCenter();
   var zoom = this._viewer.viewport.getZoom();
 
-  window.history.pushState("Moved", this._data_path, "?data="+this._data_path+"&center="+center.x+","+center.y+"&zoom="+zoom);
+  window.history.pushState("Moved", this._data_path, "?data="+this._data_path+"&center="+center.x+","+center.y+"&zoom="+zoom+"&contrast="+this._contrast);
 
   // return
   // if (this._prev_viewer) {
