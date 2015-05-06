@@ -12,6 +12,9 @@ D.manager = function() {
   // the contrast value
   this._contrast = 10;
 
+  this._center = null;
+  this._zoom = null;
+
   this.init();
 
 };
@@ -21,15 +24,28 @@ D.manager.prototype.init = function() {
   // let's parse the url args
   var args = UTIL.parse_args();
 
+  // show tree view
+  this.setup_tree();
+
   if (args['data']) {
 
     // directly view data
     this.view(args['data']);
 
-  } else {
+    // hide the tree
+    $('#nav_container').toggle('slide', {direction: 'left'}, 500);
 
-    // show tree view
-    this.setup_tree();
+    // check if we have view coordinates
+    if (args['center']) {
+
+      this._center = args['center'].split(',');
+
+    }
+    if (args['zoom']) {
+
+      this._zoom = args['zoom'];
+
+    }
 
   }
 
@@ -211,6 +227,11 @@ D.manager.prototype.create_viewer = function(page, visible) {
   viewer.innerTracker.keyHandler = null;
   viewer.innerTracker.keyDownHandler = null;
 
+  viewer.addHandler('animation-finish', this.store_viewpoint.bind(this));
+  viewer.addHandler('tile-drawn', this.propagate_viewpoint.bind(this));
+  // viewer.addHandler('zoom', this.propagate_viewport.bind(this));
+
+
   // keyboard (needs to be rebound to overwrite OSD)
   window.onkeydown = this.onkeydown.bind(this);
 
@@ -276,23 +297,53 @@ D.manager.prototype.update_parameters = function() {
 };
 
 
+D.manager.prototype.propagate_viewpoint = function(event) {
 
+  this._viewer.removeAllHandlers('tile-drawn');
 
-D.manager.prototype.propagate_viewport = function(event) {
+  if (this._center) {
+    
+    var center = new OpenSeadragon.Point(parseFloat(this._center[0]), parseFloat(this._center[1]));
+    this._viewer.viewport.panTo(center, true);
+    this._center = null;
+
+  }
+
+  if (this._zoom) {
+
+    var zoom = parseFloat(this._zoom);
+    this._viewer.viewport.zoomTo(zoom, null, true);
+    this._zoom = null;
+
+  }
+
+};
+
+D.manager.prototype.store_viewpoint = function(event) {
 
   // propagate the current viewport to the previous and the next viewers
 
   // console.log('propagating viewport', event.eventSource.id)
-  return
-  if (this._prev_viewer) {
-    this._prev_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
-    this._prev_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
-  }
 
-  if (this._next_viewer) {
-    this._next_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
-    this._next_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
-  }
+  if (!this._viewer) return;
+
+
+
+  var center = this._viewer.viewport.getCenter();
+  var zoom = this._viewer.viewport.getZoom();
+
+  window.history.pushState("Moved", this._data_path, "?data="+this._data_path+"&center="+center.x+","+center.y+"&zoom="+zoom);
+
+  // return
+  // if (this._prev_viewer) {
+  //   this._prev_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
+  //   this._prev_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
+  // }
+
+  // if (this._next_viewer) {
+  //   this._next_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
+  //   this._next_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
+  // }
 
 };
 
