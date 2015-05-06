@@ -2,16 +2,18 @@ var D = D || {};
 
 D.manager = function() {
 
-  this._websocket = null;
-  this._controller = new D.controller(this);
+  this._data_path = null;
 
-  this._viewers = [];
-
+  // the three OSD viewers for prev, current and next
   this._prev_viewer = null;
   this._viewer = null;
   this._next_viewer = null;
 
+  // the contrast value
   this._contrast = 10;
+
+  this._center = null;
+  this._zoom = null;
 
   this.init();
 
@@ -22,26 +24,246 @@ D.manager.prototype.init = function() {
   // let's parse the url args
   var args = UTIL.parse_args();
 
+  // show tree view
+  this.setup_tree();
+
   if (args['data']) {
-    this._controller._data = args['data'];
+
+    // directly view data
+    this.view(args['data']);
+
+    // hide the tree
+    $('#nav_container').toggle('slide', {direction: 'left'}, 500);
+
+    // check if we have view coordinates
+    if (args['center']) {
+
+      this._center = args['center'].split(',');
+
+    }
+    if (args['zoom']) {
+
+      this._zoom = args['zoom'];
+
+    }
+
+    if (args['contrast']) {
+
+      this._contrast = args['contrast'];
+
+    }
+
   }
-
-
-  this._websocket = new D.websocket(this);
-
-  this.setup_controls();
 
 };
 
+
+D.manager.prototype.view = function(data_path) {
+
+  if (this._data_path) {
+
+    // we have data loaded - reset everything
+
+    if (this._prev_viewer) {
+      this._prev_viewer.destroy();
+    }
+    this._prev_viewer = null;
+
+    if (this._viewer) {
+      this._viewer.destroy();
+    }
+    this._viewer = null;
+
+    if (this._next_viewer) {
+      this._next_viewer.destroy();
+    }
+    this._next_viewer = null;
+
+    $('#viewers').html("");
+
+    // the contrast value
+    this._contrast = 10;
+
+    this.setup_controls();
+
+  }
+
+  this._data_path = data_path;
+
+  // get the contents for the data path
+  var contents = $.ajax({
+      type: "GET",
+      url: 'content/' + this._data_path
+    }).done(function() {
+      
+      // setup the viewer
+      this.setup_viewer(JSON.parse(contents.responseText));
+
+      // and the controls
+      this.setup_controls();
+      this.update_parameters();
+
+      $('#data_path').html(data_path);
+
+    }.bind(this));
+
+};
+
+
+D.manager.prototype.setup_tree = function() {
+
+
+  var tree = $('#nav').tree({});
+
+
+  tree.bind(
+      'tree.click', 
+      function(e) {
+
+        var node = e.node;
+        var element = e.node.element;
+
+        // if (node.type == "NULL") {
+
+
+          var r = $.ajax({
+            url: 'type/' + node.full_url,
+            type: 'GET'
+          }).done(function() {
+
+            node.type = r.responseText;
+            
+            if (element.children[0].children.length == 2) {
+              $(element.children[0]).append("&nbsp;&nbsp;<img style='vertical-align:middle' src='gfx/"+node.type+".gif' onclick='MANAGER.view(\""+node.full_url+"\")'>");
+            }
+
+          });
+
+      }
+
+    );  
+
+  $('#nav').slimScroll({
+    height: '100%',
+    color: 'deepskyblue'
+  });
+
+  $('#treeicon').on('click', function(){
+    $('#nav_container').toggle('slide', {direction: 'left'}, 500);
+  });
+
+};
+
+
+D.manager.prototype.setup_viewer = function(content) {
+
+  this._content = content;
+  console.log(content)
+
+  for (var i=0; i<content.length; i++) {
+
+    content[i].meta_info_url = 'metainfo/' + content[i].data_path;
+
+    content[i].getTileUrl = function( level, x, y ) {
+      // in openseadragon:
+      // 0: smallest
+      // for us, 0 is the largest
+      level = this.maxLevel - level;
+
+      return "data/" + this.data_path + '/' + level + "-" + x + "-" + y + "-" + this.layer;
+    
+    }
+
+  }
+
+  this._page = 0;
+
+  this._viewer = this.create_viewer(this._page, true);
+
+  if (content.length > 1) {
+    this._next_viewer = this.create_viewer(this._page+1, false);
+  }
+
+  // update data_path in the controller
+  this._data_path = content[0].data_path;
+
+};
+
+
+
+D.manager.prototype.create_viewer = function(page, visible) {
+  
+  // create dom element
+  var container_id = 'viewer_'+page;
+  if (!visible) {
+    var style = 'z-index:0'//display:none';
+  } else {
+    var style = 'z-index:1';
+  }
+
+  $('#viewers').append('<div id="'+container_id+'" class="viewers" style="'+style+'"></div>');
+
+  var ts = this._content[page];
+
+  var meta_info = $.ajax({
+    type: "GET",
+    url: ts.meta_info_url,
+    async: false
+  }).responseText;
+
+  meta_info = JSON.parse(meta_info);
+
+  ts.width = meta_info.width;
+  ts.height = meta_info.height;
+  ts.minLevel = meta_info.minLevel;
+  ts.maxLevel = meta_info.maxLevel;
+  ts.tileSize = meta_info.tileSize;
+  ts.layer = meta_info.layer;
+
+
+  var viewer = OpenSeadragon({
+      id:            container_id,
+      prefixUrl:     "images/",
+      navigatorSizeRatio: 0.25,
+      maxZoomPixelRatio: 10,
+      showNavigationControl: false,
+      imageLoaderLimit: 3,
+      tileSources:   ts
+    });
+
+  viewer.innerTracker.keyHandler = null;
+  viewer.innerTracker.keyDownHandler = null;
+
+  viewer.addHandler('animation-finish', this.store_viewpoint.bind(this));
+  viewer.addHandler('tile-drawn', this.propagate_viewpoint.bind(this));
+  // viewer.addHandler('zoom', this.propagate_viewport.bind(this));
+
+
+  // keyboard (needs to be rebound to overwrite OSD)
+  window.onkeydown = this.onkeydown.bind(this);
+
+  return viewer;  
+
+};
+
+
+
 D.manager.prototype.setup_controls = function() {
+
+  // update sequence label
+  if (this._content && this._content.length > 1) {
+    $('#section').html('Section 1/'+this._content.length);
+    $('.labels').show();
+  } else {
+    $('.labels').hide();
+  }
 
   $("#contrast").slider({
     range: "min",
     min: 10,
     max: 100,
-    value: 10,
+    value: this._contrast,
     slide: function(e, ui) {
-      // $("#c_currentVal").html(ui.value);
       MANAGER._contrast = ui.value;
       MANAGER.update_parameters();
     }
@@ -74,170 +296,66 @@ D.manager.prototype.onkeydown = function(e) {
 
 D.manager.prototype.update_parameters = function() {
 
-  $('#section').html('Section '+(this._page+1)+'/'+this._content.length);
-
-
-  $(MANAGER._viewer.canvas.children[0]).css('webkit-filter','contrast('+(this._contrast)/10+')');
-
-};
-
-D.manager.prototype.update_tree = function(data) {
-
-  $('#nav').tree({
-    data: data,
-    autoOpen: 0
-  });
-
-};
-
-D.manager.prototype.setup_viewer = function(content) {
-
-  this._content = content;
-
-  // update sequence label
-  if (content.length > 1) {
-    $('#section').html('Section 1/'+content.length);
-    $('.labels').show();
+  if (this._content) {
+    $('#section').html('Section '+(this._page+1)+'/'+this._content.length);
   }
 
-  for (var i=0; i<content.length; i++) {
 
-    var that = this;
+  $(this._viewer.canvas.children[0]).css('webkit-filter','contrast('+(this._contrast)/10+')');
+  $(this._viewer.canvas.children[0]).css('filter','contrast('+(this._contrast)/10+')');
 
-    // content[i].getTileUrl = function( a,b,c ) {
-    //   console.log(a,b,c)
+  this.store_viewpoint();
 
-    // }
-
-    content[i].meta_info_url = 'metainfo/' + content[i].data_path;
-    // content[i].getImageInfo = function(url) {
-
-    //   var meta_info = $.ajax({
-    //     type: "GET",
-    //     url: url,
-    //     async: false
-    //   }).responseText;
-
-    //   meta_info = JSON.parse(meta_info);
-
-    //   this.width = meta_info.width;
-    //   this.height = meta_info.height;
-    //   this.minLevel = meta_info.minLevel;
-    //   this.maxLevel = meta_info.maxLevel;
-    //   this.tileSize = meta_info.tileSize;
-    //   this.layer = meta_info.layer;
+};
 
 
-    //   console.log()
-    //   // return url;
-    // }
+D.manager.prototype.propagate_viewpoint = function(event) {
 
-    content[i].getTileUrl = function( level, x, y ) {
-      // in openseadragon:
-      // 0: smallest
-      // for us, 0 is the largest
-      level = this.maxLevel - level;
+  this._viewer.removeAllHandlers('tile-drawn');
 
-      return "data/" + this.data_path + '/' + level + "-" + x + "-" + y + "-" + this.layer;
+  if (this._center) {
     
-    }
+    var center = new OpenSeadragon.Point(parseFloat(this._center[0]), parseFloat(this._center[1]));
+    this._viewer.viewport.panTo(center, true);
+    this._center = null;
 
   }
 
-  this._page = 0;
+  if (this._zoom) {
 
-  this._viewer = this.create_viewer(this._page, true);
+    var zoom = parseFloat(this._zoom);
+    this._viewer.viewport.zoomTo(zoom, null, true);
+    this._zoom = null;
 
-  // this._viewer.addHandler('pan', this.propagate_viewport.bind(this));
-  // this._viewer.addHandler('zoom', this.propagate_viewport.bind(this));
-
-
-  if (content.length > 1) {
-    this._next_viewer = this.create_viewer(this._page+1, false);
   }
-
-  // update data_path in the controller
-  this._controller._data = content[0].data_path;
 
 };
 
-
-D.manager.prototype.propagate_viewport = function(event) {
+D.manager.prototype.store_viewpoint = function(event) {
 
   // propagate the current viewport to the previous and the next viewers
 
   // console.log('propagating viewport', event.eventSource.id)
-  return
-  if (this._prev_viewer) {
-    this._prev_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
-    this._prev_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
-  }
 
-  if (this._next_viewer) {
-    this._next_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
-    this._next_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
-  }
-
-};
+  if (!this._viewer) return;
 
 
-D.manager.prototype.create_viewer = function(page, visible) {
-  
-  // create dom element
-  var container_id = 'viewer_'+page;
-  if (!visible) {
-    var style = 'z-index:0'//display:none';
-  } else {
-    var style = 'z-index:1';
-  }
 
-  $('#viewers').append('<div id="'+container_id+'" class="viewers" style="'+style+'"></div>');
+  var center = this._viewer.viewport.getCenter();
+  var zoom = this._viewer.viewport.getZoom();
 
-  var ts = this._content[page];
+  window.history.pushState("Moved", this._data_path, "?data="+this._data_path+"&center="+center.x+","+center.y+"&zoom="+zoom+"&contrast="+this._contrast);
 
+  // return
+  // if (this._prev_viewer) {
+  //   this._prev_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
+  //   this._prev_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
+  // }
 
-  var meta_info = $.ajax({
-    type: "GET",
-    url: ts.meta_info_url,
-    async: false
-  }).responseText;
-
-  meta_info = JSON.parse(meta_info);
-
-  ts.width = meta_info.width;
-  ts.height = meta_info.height;
-  ts.minLevel = meta_info.minLevel;
-  ts.maxLevel = meta_info.maxLevel;
-  ts.tileSize = meta_info.tileSize;
-  ts.layer = meta_info.layer;
-
-
-  var viewer = OpenSeadragon({
-      id:            container_id,
-      prefixUrl:     "images/",
-      navigatorSizeRatio: 0.25,
-      // preserveViewport: true,
-      // sequenceMode:   false,
-      maxZoomPixelRatio: 10,
-      showNavigationControl: false,
-      imageLoaderLimit: 3,
-      // showNavigator: true,
-      tileSources:   ts
-    });
-
-  viewer.innerTracker.keyHandler = null;
-  viewer.innerTracker.keyDownHandler = null;
-
-  // viewer.addHandler('tile-drawn', function(event,a) {
-
-  //   console.log(event,a)
-
-  // }.bind(this));
-
-  // keyboard (needs to be rebound to overwrite OSD)
-  window.onkeypress = window.onkeydown = this.onkeydown.bind(this);
-
-  return viewer;  
+  // if (this._next_viewer) {
+  //   this._next_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
+  //   this._next_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
+  // }
 
 };
 
@@ -258,7 +376,7 @@ D.manager.prototype.move = function(sign) {
   var new_container = '#viewer_'+this._page;
   
   // 
-  this._controller._data = this._content[this._page].data_path;
+  this._data_path = this._content[this._page].data_path;
 
 
   if (sign > 0) {

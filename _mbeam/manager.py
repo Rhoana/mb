@@ -1,4 +1,5 @@
 import cv2
+import glob
 import json
 import math
 import multiprocessing as mp
@@ -8,91 +9,29 @@ import time
 
 from collections import OrderedDict
 
-
-from cache import CACHE
 from constants import Constants
 from fov import FoV
 from scan import Scan
 from section import Section
 from view import View
-from websocketcontroller import WebSocketController
 
 
 class Manager(object):
 
-  def __init__(self, directory):
+  def __init__(self):
     '''
     '''
-    self._directory = directory
-    self._data_tree = None
-
-    self._broadcaster = None
-    self._websocket_controller = WebSocketController(self)
-
-    self._viewing_queue = []
-
-    # self._fovs = {}
-    # self._sections = {}
     self._views = {}
-
-    self._no_workers = 3#mp.cpu_count() - 1
-    self._active_workers = mp.Queue(self._no_workers)
 
     self._tiles = OrderedDict() # tile cache
     self._tile_cache_size = 61*5 # enough for 1 MFOV for 5 parallel users
 
     self._client_tiles = {}
 
-
   def start(self):
     '''
     '''
-
-    # for f in os.listdir(self._directory):
-    #   f = os.path.join(self._directory, f)
-    #   if os.path.isdir(f):
-    #     print f
-    #     fov = FoV.from_directory(f)
-    #     fov.load_and_stitch_thumbnails()
-    
-
-  def index(self):
-    '''
-    '''
-
-    data_tree = {}
-    rootdir = self._directory
-    start = rootdir.rfind(os.sep) + 1
-    # rootdir = self._directory.rstrip(os.sep)
-    # start = rootdir.rfind(os.sep) + 1
-    for path, dirs, files in os.walk(rootdir):
-      folders = path[start:].split(os.sep)
-
-      # print folders
-      subdir = {}
-      if folders[0] != '':
-        folder_path = os.path.join(rootdir, os.sep.join(folders))
-
-        seconds_since_modified = time.time() - os.path.getmtime(folder_path)
-
-        if seconds_since_modified < Constants.FOLDER_RESTING_TIME:
-          # this folder shall not be indexed yet
-          # we need to jump out
-          return False
-        
-        parent = reduce(dict.get, folders[:-1], data_tree)
-        parent[folders[-1]] = subdir
-
-    new_data = False
-    if data_tree != self._data_tree:
-      new_data = True
-
-    self._data_tree = data_tree
-
-    if new_data:
-      # new data arrived, notify clients
-      self._websocket_controller.send_data_tree()
-    
+    pass
 
   def check_path_type(self, data_path):
     '''
@@ -124,12 +63,33 @@ class Manager(object):
       level += 1
 
 
-  def calculate_width_height(self, data_path):
+  def get_tree(self, data_path):
     '''
     '''
-    section = Section.from_directory(os.path.join(self._directory, data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True)
-    
-    return [section._width / Constants.IMAGE_RATIO, section._height / Constants.IMAGE_RATIO]
+
+    if not data_path:
+      data_path = Constants.DEFAULT_DATA_FOLDER
+
+    dir_content = sorted(os.listdir(data_path))
+
+    dir_listing = []
+
+    for c in dir_content:
+
+      full_url = os.path.join(data_path, c)
+
+      if not os.path.isdir(full_url):
+        continue
+
+      entry = {}
+      entry['label'] = c
+      entry['full_url'] = full_url
+      entry['id'] = os.path.join(data_path, c)
+      entry['load_on_demand'] = True
+
+      dir_listing.append(entry)
+
+    return dir_listing
 
 
   def get_content(self, data_path):
@@ -139,146 +99,72 @@ class Manager(object):
 
     views = []
 
-    joined_path = os.path.join(self._directory, data_path)
-
     # detect if this is a scan, section or fov
-    if self.check_path_type(joined_path) == 'FOV':
-      # this is a FoV
-      # fov = FoV.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, False) # lazy indexing
-
-      # #
-      # # and now we create a view from it
-      # view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty, Constants.IMAGE_RATIO)
-
-      # views.append(view)
+    if self.check_path_type(data_path) == 'FOV':
 
       views.append({'data_path':data_path})
 
 
-    elif self.check_path_type(joined_path) == 'SECTION':
-
-      # section = Section.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, False) # lazy indexing
-
-      # #
-      # # and now we create a view from it
-      # # view = View.from_Section(section, 4)
-      # # print 'txty sec', section._tx, section._ty
-      # view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
+    elif self.check_path_type(data_path) == 'SECTION':
 
       views.append({'data_path':data_path})
 
 
+    elif self.check_path_type(data_path) == 'SCAN':
 
-
-    elif self.check_path_type(joined_path) == 'SCAN':
-
-      scan = Scan.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, False) # lazy indexing
+      scan = Scan.from_directory(data_path, False) # lazy indexing
 
       for i, section in enumerate(scan._sections):
 
-        # # only index the first section
-        # if i==0:
-        #   section.force_update_bounding_box()
-
-        # view = View.create(os.path.join(data_path, section.id), section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
-
         views.append({'data_path':os.path.join(data_path, section.id)})
-    
-    
-    # view_descriptors = []
-
 
     return views
 
-    # for j,view in enumerate(views):
-
-    #   view_descriptors.append(view._data_path)
-
-
-
-      # #
-      # # we grab the width and height of the canvas of this view
-      # # and calculate the zoomlevels
-      # maxLevel = 5#len(view.canvases) - 1 ### TODO calculate
-      # # canvas = view.canvases[0]
-      # width = view._width
-      # height = view._height
-
-      # # zoomlevels = range(int(math.log(width / Manager.THUMBNAIL_RATIO / Manager.PYRAMID_MIN_SIZE,2)) + 1)
-
-      # view_descriptor = {}
-      # view_descriptor['data_path'] = view._data_path
-      # # view_descriptor['width'] = width #/ Manager.THUMBNAIL_RATIO
-      # # view_descriptor['height'] = height #/ Manager.THUMBNAIL_RATIO
-      # # view_descriptor['url'] = 'meta_info/' + view._data_path
-      # view_descriptor['layer'] = j
-      # view_descriptor['minLevel'] = 0#zoomlevels[0]
-      # view_descriptor['maxLevel'] = 1#maxLevel#zoomlevels[-1]
-      # view_descriptor['tileSize'] = Constants.CLIENT_TILE_SIZE
-      # view_descriptors.append(view_descriptor)
-
-      # #
-      # # HERE, WE ADD THE VIEW TO OUR QUEUE
-      # # BUT ONLY IF WE DO NOT HAVE THIS VIEW YET
-      # #
-      # if not view._data_path in self._views:
-      #   self._viewing_queue.append(view)
-      #   #
-      #   # and to our views dictionary
-      #   #
-      #   self._views[view._data_path] = view
-
-    # return view_descriptors
 
   def get_meta_info(self, data_path):
     '''
     Get meta information for a requested data path.
     '''
-    # print 'DATA',data_path
 
+    if not data_path in self._views:
+        
+      # detect if this is a section or fov
+      if self.check_path_type(data_path) == 'FOV':
+        # this is a FoV
+        fov = FoV.from_directory(data_path, True)
 
-    joined_path = os.path.join(self._directory, data_path)
+        width = fov._width
+        height = fov._height
 
-    # detect if this is a scan, section or fov
-    if self.check_path_type(joined_path) == 'FOV':
-      # this is a FoV
-      fov = FoV.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True)
+        view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty, self)
 
-      width = fov._width
-      height = fov._height
+      elif self.check_path_type(data_path) == 'SECTION':
 
-      view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty, Constants.IMAGE_RATIO)
+        section = Section.from_directory(data_path, True)
 
-    elif self.check_path_type(joined_path) == 'SECTION':
+        width = section._width
+        height = section._height
 
-      section = Section.from_directory(joined_path, Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO, True)
+        view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty, self)
 
-      width = section._width
-      height = section._height
-
-      view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty, Constants.IMAGE_RATIO)
-
-
-    if not view._data_path in self._views:
-      
       #
-      # and to our views dictionary
+      # and add to our views dictionary
       #
-      self._views[view._data_path] = view
+      self._views[data_path] = view
 
+    else:
+
+      view = self._views[data_path]
 
     meta_info = {}
-    meta_info['width'] = width / Constants.IMAGE_RATIO
-    meta_info['height'] = height / Constants.IMAGE_RATIO
+    meta_info['width'] = view._width
+    meta_info['height'] = view._height
     meta_info['layer'] = 0
-    meta_info['minLevel'] = 0#zoomlevels[0]
-    meta_info['maxLevel'] = 1#maxLevel#zoomlevels[-1]
-    meta_info['tileSize'] = Constants.CLIENT_TILE_SIZE    
+    meta_info['minLevel'] = 0
+    meta_info['maxLevel'] = 1
+    meta_info['tileSize'] = Constants.CLIENT_TILE_SIZE
 
-
-    
-
-    return json.dumps(meta_info)
+    return meta_info
 
 
   def get_image(self, data_path, x, y, z, w):
@@ -341,9 +227,10 @@ class Manager(object):
       if overlapping:
         required_tiles[t] = tile_dict
 
-    abs_data_path = os.path.join(self._directory, data_path)
+    stitched_w = min(view._width / 2**w -x_c, Constants.CLIENT_TILE_SIZE)
+    stitched_h = min(view._height / 2**w -y_c, Constants.CLIENT_TILE_SIZE)
 
-    stitched = np.zeros((Constants.CLIENT_TILE_SIZE, Constants.CLIENT_TILE_SIZE), dtype=np.uint8)
+    stitched = np.zeros((stitched_h, stitched_w), dtype=np.uint8)
 
 
     if Constants.INVERT:
@@ -358,14 +245,10 @@ class Manager(object):
       tile = tile_dict['tile']  
 
       # fov paths need to be treated differently
-      if len(view._fovs) > 1:
-        t_abs_data_path = os.path.join(abs_data_path, tile_dict['fov'])
+      if self.check_path_type(data_path) != 'FOV':
+        t_abs_data_path = os.path.join(data_path, tile_dict['fov'])
       else:
-        t_abs_data_path = abs_data_path
-
-      #
-      # NO CACHING FOR NOW
-      #
+        t_abs_data_path = data_path
 
       # print 'LOADING', os.path.join(t_abs_data_path, tile._filename)
       if t in self._tiles:
@@ -374,7 +257,7 @@ class Manager(object):
           # print 'CACHE HIT'
         else:
           # tile there but not correct zoomlevel
-          tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+          tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
           current_tile = tile.downsample(2**w)
           self._tiles[t][w] = tile._imagedata  
       else: 
@@ -389,7 +272,8 @@ class Manager(object):
             # print 'FREEING'
             del self._tiles[first_added_item]
 
-        tile.load(os.path.join(t_abs_data_path), Constants.IMAGE_PREFIX, Constants.IMAGE_RATIO)
+        tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
+
         current_tile = tile.downsample(2**w)
         self._tiles[t] = {w:current_tile}
 
@@ -402,8 +286,9 @@ class Manager(object):
       stitched_x = int(max(tx, top_left[0]) - top_left[0])
       stitched_y = int(max(ty, top_left[1]) - top_left[1])
 
-      stitched_w = min(t_width - max(top_left[0] - tx, 0), Constants.CLIENT_TILE_SIZE-stitched_x)
-      stitched_h = min(t_height - max(top_left[1] - ty, 0), Constants.CLIENT_TILE_SIZE-stitched_y)
+      stitched_w = int(min(t_width - max(top_left[0] - tx, 0), Constants.CLIENT_TILE_SIZE-stitched_x))
+      stitched_h = int(min(t_height - max(top_left[1] - ty, 0), Constants.CLIENT_TILE_SIZE-stitched_y))
+
 
       t_sub_x = int(max(tx, top_left[0]) - tx)
       t_sub_y = int(max(ty, top_left[1]) - ty)
@@ -418,27 +303,3 @@ class Manager(object):
       cv2.imwrite(osd_file_url_full, stitched)
 
     return cv2.imencode('.jpg', stitched)[1].tostring()
-
-
-  def tick(self):
-    '''
-    '''
-
-    #
-    # check for new data in the filesystem
-    #
-    # self.index() ### do not index all the time for now
-
-    # #
-    # # loop through cache
-    # #
-    # for canvas in CACHE:
-    #   canvas = CACHE[canvas]
-    #   delta = time.time() - canvas._last_used
-    #   if (delta >= Constants.CACHE_RESTING_TIME):
-    #     # we should free it here
-    #     canvas.free()
-
-
-    
-

@@ -1,3 +1,4 @@
+import json
 import os
 import socket
 import time
@@ -5,53 +6,7 @@ import tornado
 import tornado.gen
 import tornado.web
 import tornado.websocket
-
-cl = []
-
-class WebSocketHandler(tornado.websocket.WebSocketHandler):
-
-  def initialize(self, manager):
-    '''
-    '''
-    self._manager = manager
-    self._controller = self._manager._websocket_controller
-
-  def open(self):
-    '''
-    '''
-    if self not in cl:
-      cl.append(self)
-
-    self._controller.handshake(self)
-
-  def check_origin(self, origin):
-    '''
-    '''
-    return True
-
-  def on_close(self):
-    '''
-    '''
-    if self in cl:
-      cl.remove(self)
-
-  def on_message(self, message):
-    '''
-    '''
-    self._controller.on_message(message)
-
-  def send(self, message, binary=False):
-    '''
-    Sends a message to a single client.
-    '''
-    self.write_message(message, binary=binary)
-
-  def broadcast(self, message, binary=False):
-    '''
-    Sends a message to all connected clients.
-    '''
-    for c in cl:
-      c.write_message(message, binary=binary)
+import urllib
 
 
 class WebServerHandler(tornado.web.RequestHandler):
@@ -83,9 +38,10 @@ class WebServer:
     port = self._port
 
     webapp = tornado.web.Application([
-
-      (r'/ws', WebSocketHandler, dict(manager=self._manager)),
       
+      (r'/tree/(.*)', WebServerHandler, dict(webserver=self)),
+      (r'/type/(.*)', WebServerHandler, dict(webserver=self)),
+      (r'/content/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/metainfo/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/data/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/(.*)', tornado.web.StaticFileHandler, dict(path=os.path.join(os.path.dirname(__file__),'../web'), default_filename='index.html'))
@@ -96,7 +52,6 @@ class WebServer:
 
     print 'Starting webserver at \033[93mhttp://' + ip + ':' + str(port) + '\033[0m'
 
-    tornado.ioloop.PeriodicCallback(self._manager.tick, 200).start()
     tornado.ioloop.IOLoop.instance().start()
 
   @tornado.gen.coroutine
@@ -107,11 +62,34 @@ class WebServer:
 
     splitted_request = handler.request.uri.split('/')
 
-    # print splitted_request
+    path = '/'.join(splitted_request[2:])
 
-    if splitted_request[1] == 'metainfo':
+    if splitted_request[1] == 'tree':
 
-      path = '/'.join(splitted_request[2:])
+      data_path = path.split('?')[0]
+      parameters = path.split('?')[1].split('&')
+      
+      if parameters[0][0] != '_':
+        data_path = urllib.unquote(parameters[0].split('=')[1])
+      else:
+        data_path = None
+      
+      content = json.dumps(self._manager.get_tree(data_path))
+      content_type = 'text/html'
+
+    elif splitted_request[1] == 'type':
+
+      content = self._manager.check_path_type(path)
+      if not content:
+        content = 'NULL'
+      content_type = 'text/html'
+
+    elif splitted_request[1] == 'content':
+
+      content = json.dumps(self._manager.get_content(path))
+      content_type = 'text/html'
+
+    elif splitted_request[1] == 'metainfo':
 
       content = self._manager.get_meta_info(path)
       content_type = 'text/html'
@@ -119,8 +97,8 @@ class WebServer:
     elif splitted_request[1] == 'data':
 
       # this is for actual image data
-
       path = '/'.join(splitted_request[2:-1])
+
       tile = splitted_request[-1].split('-')
 
       x = int(tile[1])

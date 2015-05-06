@@ -24,10 +24,10 @@ class Scan(object):
   @property
   def id(self):
     return self._directory.strip(os.sep).split(os.sep)[-1]
-    # return os.path.basename(self._directory)
+
 
   @staticmethod
-  def from_directory(directory, file_prefix='', ratio=1, calculate_bounding_box=False):
+  def from_directory(directory, calculate_bounding_box=False):
     '''
     Loads a scan from a directory without loading any images.
     '''
@@ -41,9 +41,9 @@ class Scan(object):
         # sections always reside in directories
         continue
 
-      section = Section.from_directory(section_path, file_prefix, ratio, calculate_bounding_box)
+      section = Section.from_directory(section_path, calculate_bounding_box)
       sections.append(section)
 
     scan = Scan(directory, sections)
-    # print section._width, section._height, section._tx, section._ty
+    
     return scan
