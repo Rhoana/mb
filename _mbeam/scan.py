@@ -4,6 +4,7 @@ import sys
 
 
 from section import Section
+from util import Util
 
 class Scan(object):
 
@@ -34,7 +35,7 @@ class Scan(object):
 
     sections = []
 
-    for s in os.listdir(directory):
+    for s in Util.listdir(directory):
       section_path = os.path.join(directory, s)
 
       if not os.path.isdir(section_path):

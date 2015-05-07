@@ -4,6 +4,7 @@ import sys
 
 
 from fov import FoV
+from util import Util
 
 class Section(object):
 
@@ -81,7 +82,7 @@ class Section(object):
 
     fovs = []
 
-    for f in os.listdir(directory):
+    for f in Util.listdir(directory):
       fov_path = os.path.join(directory, f)
 
       if not os.path.isdir(fov_path):

@@ -13,6 +13,7 @@ from constants import Constants
 from fov import FoV
 from scan import Scan
 from section import Section
+from util import Util
 from view import View
 
 
@@ -70,7 +71,7 @@ class Manager(object):
     if not data_path:
       data_path = Constants.DEFAULT_DATA_FOLDER
 
-    dir_content = sorted(os.listdir(data_path))
+    dir_content = sorted(Util.listdir(data_path))
 
     dir_listing = []
 
@@ -131,7 +132,7 @@ class Manager(object):
     if not data_path in self._views:
         
       path_type = self.check_path_type(data_path)
-        
+
       # detect if this is a section or fov
       if path_type == 'FOV':
         # this is a FoV
