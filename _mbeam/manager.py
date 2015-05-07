@@ -44,24 +44,17 @@ class Manager(object):
     # level 1: this is a section
     # level 2: this is a scan
 
-    level = 0
-    for root, dirs, files in os.walk(data_path):
 
-      if level > 2:
-        return None
+    if os.path.exists(os.path.join(data_path, Constants.IMAGE_COORDINATES_FILE)):
+      return 'FOV'
 
-      if Constants.IMAGE_COORDINATES_FILE in files:
-        if level == 0:
-          # this is a FoV
-          return 'FOV'
-        elif level == 1:
-          # this is a section
-          return 'SECTION'
-        elif level == 2:
-          # this is a scan
-          return 'SCAN'
+    if os.path.exists(os.path.join(data_path, Util.get_first_level_subdir(data_path), Constants.IMAGE_COORDINATES_FILE)):
+      return 'SECTION'
 
-      level += 1
+    if os.path.exists(os.path.join(data_path, Util.get_second_level_subdir(data_path), Constants.IMAGE_COORDINATES_FILE)):
+      return 'SCAN'
+
+    return None
 
 
   def get_tree(self, data_path):
