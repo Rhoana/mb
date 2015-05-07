@@ -99,18 +99,20 @@ class Manager(object):
 
     views = []
 
+    path_type = self.check_path_type(data_path)
+
     # detect if this is a scan, section or fov
-    if self.check_path_type(data_path) == 'FOV':
+    if path_type == 'FOV':
 
       views.append({'data_path':data_path})
 
 
-    elif self.check_path_type(data_path) == 'SECTION':
+    elif path_type == 'SECTION':
 
       views.append({'data_path':data_path})
 
 
-    elif self.check_path_type(data_path) == 'SCAN':
+    elif path_type == 'SCAN':
 
       scan = Scan.from_directory(data_path, False) # lazy indexing
 
@@ -128,8 +130,10 @@ class Manager(object):
 
     if not data_path in self._views:
         
+      path_type = self.check_path_type(data_path)
+        
       # detect if this is a section or fov
-      if self.check_path_type(data_path) == 'FOV':
+      if path_type == 'FOV':
         # this is a FoV
         fov = FoV.from_directory(data_path, True)
 
@@ -138,7 +142,7 @@ class Manager(object):
 
         view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty, self)
 
-      elif self.check_path_type(data_path) == 'SECTION':
+      elif path_type == 'SECTION':
 
         section = Section.from_directory(data_path, True)
 
