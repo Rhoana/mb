@@ -38,9 +38,9 @@ class Scan(object):
     for s in Util.listdir(directory):
       section_path = os.path.join(directory, s)
 
-      if not os.path.isdir(section_path):
-        # sections always reside in directories
-        continue
+      # if not os.path.isdir(section_path):
+      #   # sections always reside in directories
+      #   continue
 
       section = Section.from_directory(section_path, calculate_bounding_box)
       sections.append(section)

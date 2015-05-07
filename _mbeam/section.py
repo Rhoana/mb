@@ -85,9 +85,9 @@ class Section(object):
     for f in Util.listdir(directory):
       fov_path = os.path.join(directory, f)
 
-      if not os.path.isdir(fov_path):
-        # fovs always reside in directories
-        continue
+      # if not os.path.isdir(fov_path):
+      #   # fovs always reside in directories
+      #   continue
 
       fov = FoV.from_directory(fov_path, calculate_bounding_box)
       if fov:

@@ -79,8 +79,8 @@ class Manager(object):
 
       full_url = os.path.join(data_path, c)
 
-      if not os.path.isdir(full_url):
-        continue
+      # if not os.path.isdir(full_url):
+      #   continue
 
       entry = {}
       entry['label'] = c
