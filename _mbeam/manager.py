@@ -25,7 +25,7 @@ class Manager(object):
     self._views = {}
 
     self._tiles = OrderedDict() # tile cache
-    self._tile_cache_size = 61*5 # enough for 1 MFOV for 5 parallel users
+    self._tile_cache_size = 5 # enough for 5 tiles
 
     self._client_tiles = {}
 
