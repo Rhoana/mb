@@ -45,7 +45,7 @@ class Scan(object):
 
       index_subdirs = i == 0
 
-      section = FoV.from_directory(section_path, calculate_bounding_box, index_subdirs)
+      section = FoV.from_directory(section_path, calculate_bounding_box)
       sections.append(section)
 
     scan = Scan(directory, sections)
