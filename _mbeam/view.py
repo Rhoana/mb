@@ -38,9 +38,9 @@ class View(object):
     
     # fov paths need to be treated differently
     # if manager.check_path_type(data_path) != 'FOV':
-    t_abs_data_path = os.path.join(data_path, fovs[0].id)
+    # t_abs_data_path = os.path.join(data_path, fovs[0].id)
     # else:
-    # t_abs_data_path = data_path
+    t_abs_data_path = data_path
 
     first_tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
 
