@@ -180,9 +180,9 @@ D.manager.prototype.setup_viewer = function(content) {
 
   this._viewer = this.create_viewer(this._page, true);
 
-  if (content.length > 1) {
-    this._next_viewer = this.create_viewer(this._page+1, false);
-  }
+  // if (content.length > 1) {
+  //   this._next_viewer = this.create_viewer(this._page+1, false);
+  // }
 
   // update data_path in the controller
   this._data_path = content[0].data_path;
@@ -378,82 +378,31 @@ D.manager.prototype.move = function(sign) {
   // 
   this._data_path = this._content[this._page].data_path;
 
+  var center = this._viewer.viewport.getCenter();
+  var zoom = this._viewer.viewport.getZoom();
+
+  this._viewer.destroy();
+
+
 
   if (sign > 0) {
     // moving to next
 
-    // we destroy the old previous viewer
-    if (this._prev_viewer) {
-      // this._prev_viewer.removeAllHandlers('pan');
-      // this._prev_viewer.removeAllHandlers('zoom');
-      this._prev_viewer.destroy();
-      // console.log('freeing previous viewer');
-    }
-
-    // the prev viewer is set to the current one
-    var old_viewer = this._viewer;
-    // old_viewer.removeAllHandlers('pan');
-    // old_viewer.removeAllHandlers('zoom');        
-    this._prev_viewer = this._viewer;
-    // this._prev_viewer.removeAllHandlers('pan');
-    // this._prev_viewer.removeAllHandlers('zoom');
-
-    // the current viewer is set to the next one
-    this._viewer = this._next_viewer;
-
-    // this._viewer.addHandler('pan', this.propagate_viewport.bind(this));
-    // this._viewer.addHandler('zoom', this.propagate_viewport.bind(this));
-
-
-    // and the next viewer shall be a new one
-    if (this._page+1 >= this._content.length) {
-      this._next_viewer = null;
-    } else {
-      // this._controller.request_meta_data(this._content[this._page+1]['data_path'])
-      this._next_viewer = this.create_viewer(this._page+1, false);
+      this._viewer = this.create_viewer(this._page, true);
     }
     
 
   } else {
     // moving to prev
-
-    // we destroy the old next viewer
-    if (this._next_viewer) {
-      // this._next_viewer.removeAllHandlers('pan');
-      // this._next_viewer.removeAllHandlers('zoom');      
-      this._next_viewer.destroy();
-      // console.log('freeing next viewer');
-    }
-
-    // the next viewer is set to the current one
-    var old_viewer = this._viewer;
-    // old_viewer.removeAllHandlers('pan');
-    // old_viewer.removeAllHandlers('zoom');          
-    this._next_viewer = this._viewer;
-    // this._next_viewer.removeAllHandlers('pan');
-    // this._next_viewer.removeAllHandlers('zoom'); 
-
-    // the current viewer is set to the previous one
-    this._viewer = this._prev_viewer;
-
-    // this._viewer.addHandler('pan', this.propagate_viewport.bind(this));
-    // this._viewer.addHandler('zoom', this.propagate_viewport.bind(this));
-
-
-    // and the previous viewer shall be a new one
-    if (this._page-1 < 0) {
-      this._prev_viewer = null;
-    } else {
-      this._prev_viewer = this.create_viewer(this._page-1, false);
-    }
-
+    this._viewer = this.create_viewer(this._page, true);
+    
   }
 
-  this._viewer.viewport.panTo(old_viewer.viewport.getCenter(), true);
-  this._viewer.viewport.zoomTo(old_viewer.viewport.getZoom(), null, true);
+  this._viewer.viewport.panTo(center, true);
+  this._viewer.viewport.zoomTo(zoom, null, true);
 
-  $(new_container).css('z-index', 1);    
-  $(old_container).css('z-index', 0);
+  // $(new_container).css('z-index', 1);    
+  // $(old_container).css('z-index', 0);
 
   this.update_parameters();
 
