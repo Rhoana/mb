@@ -250,14 +250,8 @@ class Manager(object):
 
       # print 'LOADING', os.path.join(t_abs_data_path, tile._filename)
       if t in self._tiles:
-        if w in self._tiles[t]:
-          current_tile = self._tiles[t][w]
-          print 'CACHE HIT'
-        else:
-          # tile there but not correct zoomlevel
-          tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
-          current_tile = tile.downsample(2**w)
-          self._tiles[t][w] = tile._imagedata  
+        current_tile = self._tiles[t][w]
+        print 'CACHE HIT'
       else: 
         #
         # we add to cache
@@ -272,8 +266,10 @@ class Manager(object):
 
         tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
 
-        current_tile = tile.downsample(2**w)
-        self._tiles[t] = {w:current_tile}
+        current_tile = tile.downsample(2**0)
+        current_tile2 = tile.downsample(2**1)
+        self._tiles[t] = {0:current_tile, 1:current_tile2}
+        current_tile = self._tiles[t][w]
 
       # stitch it in our little openseadragon tile
       tx = tile_dict['tx'] / 2**w
