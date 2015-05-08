@@ -140,6 +140,7 @@ class FoV(object):
     # here we check if our image coordinates and metadata
     # files exist, if not we likely are not ready to parse yet
     if not os.path.exists(metadata_file) or not os.path.exists(image_coordinates_file):
+      print metadata_file, image_coordinates_file
       return None
 
     fov = FoV(directory, calculate_bounding_box)
