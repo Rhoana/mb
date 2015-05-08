@@ -44,7 +44,6 @@ class Manager(object):
     # level 1: this is a section
     # level 2: this is a scan
 
-
     if os.path.exists(os.path.join(data_path, Constants.IMAGE_COORDINATES_FILE)):
       return 'FOV'
 
@@ -138,7 +137,7 @@ class Manager(object):
 
       elif path_type == 'SECTION':
 
-        section = Section.from_directory(data_path, True)
+        section = Section.from_directory(data_path, True, True)
 
         width = section._width
         height = section._height

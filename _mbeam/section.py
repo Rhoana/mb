@@ -70,16 +70,9 @@ class Section(object):
     self._tx = minX
     self._ty = minY
 
-
-  @staticmethod
-  def from_directory(directory, calculate_bounding_box=False):
+  def index_fovs(self):
     '''
-    Loads a section from a directory without loading any images.
-
-    If the directory does not seem to be a section or is not ready,
-    return None.
     '''
-
     fovs = []
 
     for f in Util.listdir(directory):
@@ -92,6 +85,37 @@ class Section(object):
       fov = FoV.from_directory(fov_path, calculate_bounding_box)
       if fov:
         fovs.append(fov)
+
+    self._fovs = fovs
+
+
+  @staticmethod
+  def from_directory(directory, calculate_bounding_box=False, index_subdirs=True):
+    '''
+    Loads a section from a directory without loading any images.
+
+    If the directory does not seem to be a section or is not ready,
+    return None.
+    '''
+
+    if index_subdirs:
+  
+      fovs = []
+
+      for f in Util.listdir(directory):
+        fov_path = os.path.join(directory, f)
+
+        # if not os.path.isdir(fov_path):
+        #   # fovs always reside in directories
+        #   continue
+
+        fov = FoV.from_directory(fov_path, calculate_bounding_box)
+        if fov:
+          fovs.append(fov)
+
+    else:
+
+      fovs = None
 
     section = Section(directory, fovs, calculate_bounding_box)
     return section
