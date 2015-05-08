@@ -347,15 +347,15 @@ D.manager.prototype.store_viewpoint = function(event) {
   window.history.pushState("Moved", this._data_path, "?data="+this._data_path+"&center="+center.x+","+center.y+"&zoom="+zoom+"&contrast="+this._contrast);
 
   // return
-  // if (this._prev_viewer) {
-  //   this._prev_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
-  //   this._prev_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
-  // }
+  if (this._prev_viewer) {
+    this._prev_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
+    this._prev_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
+  }
 
-  // if (this._next_viewer) {
-  //   this._next_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
-  //   this._next_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
-  // }
+  if (this._next_viewer) {
+    this._next_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
+    this._next_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
+  }
 
 };
 
