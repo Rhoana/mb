@@ -36,7 +36,7 @@ class Scan(object):
 
     sections = []
 
-    for i,s in enumerate(Util.listdir(directory)):
+    for i,s in enumerate(sorted(Util.listdir(directory))):
       section_path = os.path.join(directory, s)
 
       # if not os.path.isdir(section_path):
