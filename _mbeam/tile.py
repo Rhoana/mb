@@ -1,8 +1,6 @@
 import cv2
 import os
 
-from imagecollection import ImageCollection
-
 class Tile(object):
 
   def __init__(self, filename, tx=-1, ty=-1, tz=-1):
