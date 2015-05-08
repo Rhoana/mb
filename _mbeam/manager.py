@@ -45,13 +45,13 @@ class Manager(object):
     # level 2: this is a scan
 
     if os.path.exists(os.path.join(data_path, Constants.IMAGE_COORDINATES_FILE)):
-      return 'FOV'
-
-    if os.path.exists(os.path.join(data_path, Util.get_first_level_subdir(data_path), Constants.IMAGE_COORDINATES_FILE)):
       return 'SECTION'
 
-    if os.path.exists(os.path.join(data_path, Util.get_second_level_subdir(data_path), Constants.IMAGE_COORDINATES_FILE)):
+    if os.path.exists(os.path.join(data_path, Util.get_first_level_subdir(data_path), Constants.IMAGE_COORDINATES_FILE)):
       return 'SCAN'
+
+    # if os.path.exists(os.path.join(data_path, Util.get_second_level_subdir(data_path), Constants.IMAGE_COORDINATES_FILE)):
+    #   return 'SCAN'
 
     return None
 
@@ -95,12 +95,13 @@ class Manager(object):
     path_type = self.check_path_type(data_path)
 
     # detect if this is a scan, section or fov
-    if path_type == 'FOV':
+    # if path_type == 'FOV':
 
-      views.append({'data_path':data_path})
+    #   views.append({'data_path':data_path})
 
 
-    elif path_type == 'SECTION':
+    
+    if path_type == 'SECTION':
 
       views.append({'data_path':data_path})
 
@@ -126,7 +127,7 @@ class Manager(object):
       path_type = self.check_path_type(data_path)
 
       # detect if this is a section or fov
-      if path_type == 'FOV':
+      if path_type == 'SECTION':
         # this is a FoV
         fov = FoV.from_directory(data_path, True)
 
@@ -135,14 +136,14 @@ class Manager(object):
 
         view = View.create(data_path, [fov], fov._width, fov._height, fov._tx, fov._ty, self)
 
-      elif path_type == 'SECTION':
+      # elif path_type == 'SECTION':
 
-        section = Section.from_directory(data_path, True, True)
+      #   section = Section.from_directory(data_path, True, True)
 
-        width = section._width
-        height = section._height
+      #   width = section._width
+      #   height = section._height
 
-        view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty, self)
+      #   view = View.create(data_path, section._fovs, section._width, section._height, section._tx, section._ty, self)
 
       #
       # and add to our views dictionary
