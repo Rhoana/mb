@@ -25,7 +25,7 @@ class Manager(object):
     self._views = {}
 
     self._tiles = OrderedDict() # tile cache
-    self._tile_cache_size = 5 # enough for 5 tiles
+    self._tile_cache_size = 10 # enough for 5 tiles
 
     self._client_tiles = {}
 
@@ -252,7 +252,7 @@ class Manager(object):
       if t in self._tiles:
         if w in self._tiles[t]:
           current_tile = self._tiles[t][w]
-          # print 'CACHE HIT'
+          print 'CACHE HIT'
         else:
           # tile there but not correct zoomlevel
           tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
