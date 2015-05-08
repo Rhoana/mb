@@ -389,7 +389,6 @@ D.manager.prototype.move = function(sign) {
     // moving to next
 
       this._viewer = this.create_viewer(this._page, true);
-    }
     
 
   } else {
