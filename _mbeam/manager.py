@@ -243,10 +243,10 @@ class Manager(object):
       tile = tile_dict['tile']  
 
       # fov paths need to be treated differently
-      if self.check_path_type(data_path) != 'FOV':
-        t_abs_data_path = os.path.join(data_path, tile_dict['fov'])
-      else:
-        t_abs_data_path = data_path
+      # if self.check_path_type(data_path) != 'FOV':
+      #   t_abs_data_path = os.path.join(data_path, tile_dict['fov'])
+      # else:
+      t_abs_data_path = data_path
 
       # print 'LOADING', os.path.join(t_abs_data_path, tile._filename)
       if t in self._tiles:
