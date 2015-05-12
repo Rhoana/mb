@@ -4,6 +4,7 @@ import sys
 
 
 from fov import FoV
+from util import Util
 
 class Section(object):
 
@@ -69,9 +70,27 @@ class Section(object):
     self._tx = minX
     self._ty = minY
 
+  def index_fovs(self):
+    '''
+    '''
+    fovs = []
+
+    for f in Util.listdir(directory):
+      fov_path = os.path.join(directory, f)
+
+      # if not os.path.isdir(fov_path):
+      #   # fovs always reside in directories
+      #   continue
+
+      fov = FoV.from_directory(fov_path, calculate_bounding_box)
+      if fov:
+        fovs.append(fov)
+
+    self._fovs = fovs
+
 
   @staticmethod
-  def from_directory(directory, calculate_bounding_box=False):
+  def from_directory(directory, calculate_bounding_box=False, index_subdirs=True):
     '''
     Loads a section from a directory without loading any images.
 
@@ -79,18 +98,24 @@ class Section(object):
     return None.
     '''
 
-    fovs = []
+    if index_subdirs:
+  
+      fovs = []
 
-    for f in os.listdir(directory):
-      fov_path = os.path.join(directory, f)
+      for f in Util.listdir(directory):
+        fov_path = os.path.join(directory, f)
 
-      if not os.path.isdir(fov_path):
-        # fovs always reside in directories
-        continue
+        # if not os.path.isdir(fov_path):
+        #   # fovs always reside in directories
+        #   continue
 
-      fov = FoV.from_directory(fov_path, calculate_bounding_box)
-      if fov:
-        fovs.append(fov)
+        fov = FoV.from_directory(fov_path, calculate_bounding_box)
+        if fov:
+          fovs.append(fov)
+
+    else:
+
+      fovs = None
 
     section = Section(directory, fovs, calculate_bounding_box)
     return section

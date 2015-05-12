@@ -4,6 +4,7 @@ import sys
 
 
 from section import Section
+from util import Util
 
 class Scan(object):
 
@@ -34,14 +35,16 @@ class Scan(object):
 
     sections = []
 
-    for s in os.listdir(directory):
+    for i,s in enumerate(Util.listdir(directory)):
       section_path = os.path.join(directory, s)
 
-      if not os.path.isdir(section_path):
-        # sections always reside in directories
-        continue
+      # if not os.path.isdir(section_path):
+      #   # sections always reside in directories
+      #   continue
 
-      section = Section.from_directory(section_path, calculate_bounding_box)
+      index_subdirs = i == 0
+
+      section = Section.from_directory(section_path, calculate_bounding_box, index_subdirs)
       sections.append(section)
 
     scan = Scan(directory, sections)

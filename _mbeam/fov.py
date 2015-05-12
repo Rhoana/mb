@@ -55,7 +55,7 @@ class FoV(object):
     with open(metadata_file) as f:
       for l in f.readlines():
         l = l.strip()
-        values = l.split('\t')
+        values = l.split()
         metadata[values[0].strip(':')] = values[-1]
 
     #
