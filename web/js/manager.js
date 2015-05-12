@@ -10,7 +10,8 @@ D.manager = function() {
   this._next_viewer = null;
 
   // the contrast value
-  this._contrast = 10;
+  this._contrast = 100;
+  this._brightness = 100;
 
   this._center = null;
   this._zoom = null;
@@ -53,6 +54,12 @@ D.manager.prototype.init = function() {
 
     }
 
+    if (args['brightness']) {
+
+      this._contrast = args['brightness'];
+
+    }
+
   }
 
 };
@@ -82,7 +89,8 @@ D.manager.prototype.view = function(data_path) {
     $('#viewers').html("");
 
     // the contrast value
-    this._contrast = 10;
+    this._contrast = 100;
+    this._brightness = 100;
 
     this.setup_controls();
 
@@ -260,11 +268,22 @@ D.manager.prototype.setup_controls = function() {
 
   $("#contrast").slider({
     range: "min",
-    min: 10,
+    min: 0,
     max: 100,
     value: this._contrast,
     slide: function(e, ui) {
       MANAGER._contrast = ui.value;
+      MANAGER.update_parameters();
+    }
+  });
+
+  $("#brightness").slider({
+    range: "min",
+    min: 0,
+    max: 100,
+    value: this._brightness,
+    slide: function(e, ui) {
+      MANAGER._brightness = ui.value;
       MANAGER.update_parameters();
     }
   });
@@ -301,8 +320,8 @@ D.manager.prototype.update_parameters = function() {
   }
 
 
-  $(this._viewer.canvas.children[0]).css('webkit-filter','contrast('+(this._contrast)/10+')');
-  $(this._viewer.canvas.children[0]).css('filter','contrast('+(this._contrast)/10+')');
+  $(this._viewer.canvas.children[0]).css('webkit-filter','contrast('+(this._contrast)+'%) brightness('+(this._brightness)+'%)');
+  $(this._viewer.canvas.children[0]).css('filter','contrast('+(this._contrast)+'%) brightness('+(this._brightness)+'%)');
 
   this.store_viewpoint();
 
@@ -344,7 +363,7 @@ D.manager.prototype.store_viewpoint = function(event) {
   var center = this._viewer.viewport.getCenter();
   var zoom = this._viewer.viewport.getZoom();
 
-  window.history.pushState("Moved", this._data_path, "?data="+this._data_path+"&center="+center.x+","+center.y+"&zoom="+zoom+"&contrast="+this._contrast);
+  window.history.pushState("Moved", this._data_path, "?data="+this._data_path+"&center="+center.x+","+center.y+"&zoom="+zoom+"&contrast="+this._contrast+"&brightness="+this._brightness);
 
   // return
   // if (this._prev_viewer) {
