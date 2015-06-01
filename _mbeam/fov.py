@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import sys
+from collections import OrderedDict
 
 from constants import Constants
 from tile import Tile
@@ -71,13 +72,14 @@ class FoV(object):
 
     with open(image_coordinates_file) as f:
       
-      # we need to remove duplicate entries here
-      lines = FoV.filter_duplicate_lines(f.readlines())
+      # we need to remove duplicate entries here and only grab the last 61
+      lines = FoV.filter_duplicate_lines(f.readlines())[-61:]
       
       for i,l in enumerate(lines):
-        if i>60:
-          # only look at the first 61 entries since we do not use other thumbnails
-          break
+
+        # if i>60:
+        #   # only look at the first 61 entries since we do not use other thumbnails
+        #   break
         tile = Tile.from_string(l)
         # update width and height
         tile.width = width
@@ -119,9 +121,10 @@ class FoV(object):
     '''
     from: http://stackoverflow.com/a/480227/1183453
     '''
-    seen = set()
-    seen_add = seen.add
-    return [ x for x in lines if not (x in seen or seen_add(x))]    
+    # seen = set()
+    # seen_add = seen.add
+    # return [ x for x in lines if not (x in seen or seen_add(x))]    
+    return list(OrderedDict.fromkeys(lines))
 
 
   @staticmethod
