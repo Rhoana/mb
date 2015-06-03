@@ -1,4 +1,5 @@
 import cv2
+import glymur
 import os
 
 class Tile(object):
@@ -41,16 +42,19 @@ class Tile(object):
     '''
     # print 'LOADING',os.path.join(directory, file_prefix + self._filename) 
 
-    self._imagedata = cv2.imread(os.path.join(directory, file_prefix + self._filename), 0) # this is grayscale loading with any OpenCV version
+    #self._imagedata = cv2.imread(os.path.join(directory, file_prefix + self._filename), 0) # this is grayscale loading with any OpenCV version
+    self._imagedata = glymur.Jp2k(os.path.join(directory, file_prefix + self._filename))
+    # self._imagedata = i.read()
 
-  def downsample(self, factor):
+  def downsample(self, level):
     '''
     '''
-    if factor == 1.:
-      return self._imagedata
+    return self._imagedata.read(rlevel=level)
+    # if factor == 1.:
+    #   return self._imagedata
 
-    factor = 1./factor
-    return cv2.resize(self._imagedata, (0,0), fx=factor, fy=factor, interpolation=cv2.INTER_LINEAR)
+    # factor = 1./factor
+    # return cv2.resize(self._imagedata, (0,0), fx=factor, fy=factor, interpolation=cv2.INTER_LINEAR)
 
   @staticmethod
   def from_string(string):

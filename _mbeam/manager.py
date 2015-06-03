@@ -158,7 +158,7 @@ class Manager(object):
     meta_info['height'] = view._height
     meta_info['layer'] = 0
     meta_info['minLevel'] = 0
-    meta_info['maxLevel'] = 1
+    meta_info['maxLevel'] = 5
     meta_info['tileSize'] = Constants.CLIENT_TILE_SIZE
 
     return meta_info
@@ -255,7 +255,8 @@ class Manager(object):
         else:
           # tile there but not correct zoomlevel
           tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
-          current_tile = tile.downsample(2**w)
+          # current_tile = tile.downsample(2**w)
+          current_tile = tile.downsample(w)
           self._tiles[t][w] = tile._imagedata  
       else: 
         #
@@ -271,7 +272,8 @@ class Manager(object):
 
         tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
 
-        current_tile = tile.downsample(2**w)
+        # current_tile = tile.downsample(2**w)
+        current_tile = tile.downsample(w)
         self._tiles[t] = {w:current_tile}
 
       # stitch it in our little openseadragon tile
