@@ -42,19 +42,29 @@ class Tile(object):
     '''
     # print 'LOADING',os.path.join(directory, file_prefix + self._filename) 
 
-    #self._imagedata = cv2.imread(os.path.join(directory, file_prefix + self._filename), 0) # this is grayscale loading with any OpenCV version
-    self._imagedata = glymur.Jp2k(os.path.join(directory, file_prefix + self._filename))
-    # self._imagedata = i.read()
+    extension = os.path.splitext(self._filename)[1].lower()
+
+    if extension == '.jp2':
+      self._imagedata = glymur.Jp2k(os.path.join(directory, file_prefix + self._filename))
+    else:
+      self._imagedata = cv2.imread(os.path.join(directory, file_prefix + self._filename), 0) # this is grayscale loading with any OpenCV version
+    
 
   def downsample(self, level):
     '''
     '''
-    return self._imagedata.read(rlevel=level)
-    # if factor == 1.:
-    #   return self._imagedata
+    extension = os.path.splitext(self._filename)[1].lower()
 
-    # factor = 1./factor
-    # return cv2.resize(self._imagedata, (0,0), fx=factor, fy=factor, interpolation=cv2.INTER_LINEAR)
+    if extension == '.jp2':
+      return self._imagedata.read(rlevel=level)
+    else:
+      factor = 2**level
+      if factor == 1.:
+        return self._imagedata
+
+      factor = 1./factor
+      return cv2.resize(self._imagedata, (0,0), fx=factor, fy=factor, interpolation=cv2.INTER_LINEAR)
+
 
   @staticmethod
   def from_string(string):

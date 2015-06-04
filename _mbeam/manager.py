@@ -257,7 +257,7 @@ class Manager(object):
           tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
           # current_tile = tile.downsample(2**w)
           current_tile = tile.downsample(w)
-          self._tiles[t][w] = tile._imagedata  
+          self._tiles[t][w] = current_tile 
       else: 
         #
         # we add to cache
