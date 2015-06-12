@@ -27,8 +27,10 @@ class View(object):
 
 
   @staticmethod
-  def create(data_path, fovs, width, height, tx, ty, manager):
+  def create(data_path, width, height, tx, ty, manager):
     '''
+    Receives a data path and a bounding box of the view, and creates
+    the corresponding view.
     '''
     # we need to probe one tile and compare it to the full-res tile
     # to get the floating point ratio in x and y between tile and full-res

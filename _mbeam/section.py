@@ -1,121 +1,125 @@
 import numpy as np
 import os
 import sys
+from bounding_box import BoundingBox
+from tile import Tile
+import cv2
+import math
 
 
-from fov import FoV
 from util import Util
+import utils
 
 class Section(object):
 
-  def __init__(self, directory, fovs, calculate_bounding_box):
+  def __init__(self, json_file, calculate_bounding_box):
     '''
     '''
-    self._directory = directory
+    self._json_file = json_file
 
-    self._fovs = fovs
+    # Parse the json file
+    self._tilespecs = utils.load_tilespecs(json_file)
+    if self._tilespecs is None or len(self._tilespecs) == 0:
+        raise RuntimeError, "Error while reading tilespecs file {}".format(json_file)
 
-    self._tx = -1
-    self._ty = -1
-    self._tz = -1
-    self._width = -1
-    self._height = -1
-
-    if calculate_bounding_box:
-      # calculate these values
-      self.update_bounding_box()
-
-
-    self._imagedata = None
-    self._thumbnail = None
+    # parse the tilespec and bounding box
+    self._layer = self._tilespecs[0]["layer"]
+    self._tiles = []
+    self._bbox = BoundingBox.fromList(self._tilespecs[0]["bbox"])
+    for ts in self._tilespecs:
+      tile = Tile.from_dictionary(ts)
+      self._tiles.append(tile)
+      self._bbox.extend(tile._bbox)
 
   def __str__(self):
     '''
     '''
-    return 'Section ' + self.id + ' with ' + str(len(self._fovs)) + ' FoVs.'
+    return 'Section ' + self.id + ' with ' + str(len(self._tiles)) + ' tiles.'
 
 
   @property
   def id(self):
-    return self._directory.strip(os.sep).split(os.sep)[-1]
+    return self._layer
     
 
-  def update_bounding_box(self):
+  def render(self, bbox, scale=1):
     '''
+    Renders the section's given bounding box at a given scale.
     '''
-    width = 0
-    height = 0
+    #print "Loading section {} with bbox {} and scale {}".format(self._json_file, bbox.toStr(), scale)
 
-    minX = sys.maxint
-    minY = sys.maxint
+    # Create a canvas of the rendered image size (before downsampling)
+    out_img = np.zeros((bbox.height(), bbox.width()), dtype=np.uint8)
+    min_x = bbox.from_x
+    min_y = bbox.from_y
 
-    for f in self._fovs:
+    # Stitch the tiles
 
-      offset_x = f._tx
-      offset_y = f._ty
+    # Find the relevant tiles (according to their bounding box)
+    # TODO - make it faster using kdtrees or something like that
+    for t in self._tiles:
+      if bbox.overlap(t._bbox):
 
-      minX = min(minX, offset_x)
-      minY = min(minY, offset_y)
+        # OLD - downsample and stitch the tiles
+        # OLD - (it might be better to first stitch and then downsample, but downsampling first makes it faster)
+    
+        # render the tile, and put the image data in the output image
+        tile_img, t_start_point = t.render()
 
-    for f in self._fovs:
+        # Compute the overlapping area of the tile in the out_img (round it to integers)
+        overlap_bbox = t._bbox.intersect(bbox)
+        overlap_bbox = BoundingBox(
+            math.ceil(overlap_bbox.from_x),
+            math.floor(overlap_bbox.to_x),
+            math.ceil(overlap_bbox.from_y),
+            math.floor(overlap_bbox.to_y))
 
-      offset_x = f._tx
-      offset_y = f._ty
+        # crop the image that is out of the wanted bounding box
+        tile_img = tile_img[
+            overlap_bbox.from_y - t._bbox.from_y:overlap_bbox.to_y - t._bbox.from_y,
+            overlap_bbox.from_x - t._bbox.from_x:overlap_bbox.to_x - t._bbox.from_x
+          ]
 
-      width = max(width, f._width+offset_x-minX)
-      height = max(height, f._height+offset_y-minY)    
+        # Create a mask and an inversed mask of the tile we are going to add
+        _, mask = cv2.threshold(tile_img, 1, 255, cv2.THRESH_BINARY)
+        mask_inv = cv2.bitwise_not(mask)
 
-    self._width = width #- minX
-    self._height = height #- minY
-    self._tx = minX
-    self._ty = minY
+        # Set the area that is going to be changed in the output image
+        roi = out_img[
+            overlap_bbox.from_y - min_y:overlap_bbox.to_y - min_y,
+            overlap_bbox.from_x - min_x:overlap_bbox.to_x - min_x
+          ]
 
-  def index_fovs(self):
-    '''
-    '''
-    fovs = []
+        # Now black-out the area of the new image in the output image
+        out_bg = cv2.bitwise_and(roi, roi, mask = mask_inv)
 
-    for f in Util.listdir(directory):
-      fov_path = os.path.join(directory, f)
+        # Take only the interesting stuff out of the new tile
+        tile_fg = cv2.bitwise_and(tile_img, tile_img, mask = mask)
 
-      # if not os.path.isdir(fov_path):
-      #   # fovs always reside in directories
-      #   continue
+        # Put the new tile image in the main image
+        dst = cv2.add(out_bg, tile_fg)
+        out_img[
+            overlap_bbox.from_y - math.ceil(min_y):overlap_bbox.from_y - math.ceil(min_y) + dst.shape[0],
+            overlap_bbox.from_x - math.ceil(min_x):overlap_bbox.from_x - math.ceil(min_x) + dst.shape[1]
+          ] = dst
 
-      fov = FoV.from_directory(fov_path, calculate_bounding_box)
-      if fov:
-        fovs.append(fov)
+    # downsample the output image
+    if scale > 1:
+      out_img = cv2.resize(out_img, (0,0), fx=1./scale, fy=1./scale, interpolation=cv2.INTER_AREA)
 
-    self._fovs = fovs
+    return out_img
+
+
+    
 
 
   @staticmethod
-  def from_directory(directory, calculate_bounding_box=False, index_subdirs=True):
+  def from_file_system(json_file, calculate_bounding_box=False):
     '''
-    Loads a section from a directory without loading any images.
-
-    If the directory does not seem to be a section or is not ready,
-    return None.
+    Loads a section from a json tilespec without loading any images.
+    If the json file is not a tilespec, return None.
     '''
 
-    if index_subdirs:
-  
-      fovs = []
-
-      for f in Util.listdir(directory):
-        fov_path = os.path.join(directory, f)
-
-        # if not os.path.isdir(fov_path):
-        #   # fovs always reside in directories
-        #   continue
-
-        fov = FoV.from_directory(fov_path, calculate_bounding_box)
-        if fov:
-          fovs.append(fov)
-
-    else:
-
-      fovs = None
-
-    section = Section(directory, fovs, calculate_bounding_box)
+    section = Section(json_file, calculate_bounding_box)
     return section
+

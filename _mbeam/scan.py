@@ -12,7 +12,6 @@ class Scan(object):
     '''
     '''
     self._directory = directory
-
     self._sections = sections
 
 

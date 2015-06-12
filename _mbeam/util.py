@@ -47,3 +47,20 @@ class Util(object):
     for entry in scandir.scandir(path):
       if not entry.name.startswith('.') and entry.is_dir():
         yield entry.name
+
+  @staticmethod
+  def list_dirs_and_jsons(path):
+    '''
+    '''
+    # print path
+
+    dirs = []
+    jsons = []
+    for entry in scandir.scandir(path):
+      if entry.name.endswith('.json') and entry.is_file():
+        jsons.append(entry.name)
+      elif not entry.name.startswith('.') and entry.is_dir():
+        dirs.append(entry.name)
+
+    return dirs, jsons
+
