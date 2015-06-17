@@ -1,4 +1,5 @@
 import cv2
+import glob
 import os
 
 class Tile(object):
@@ -7,6 +8,7 @@ class Tile(object):
     '''
     '''
     self._filename = filename
+    self._basename = os.path.splitext(self._filename)[0]
     self._tx = tx
     self._ty = ty
     self._tz = tz
@@ -39,9 +41,11 @@ class Tile(object):
   def load(self, directory, file_prefix='', ratio_x=1, ratio_y=1):
     '''
     '''
-    # print 'LOADING',os.path.join(directory, file_prefix + self._filename) 
+    
+    file_path = os.path.join(directory, file_prefix + self._basename)
+    file = glob.glob(file_path + '.*')[0]
 
-    self._imagedata = cv2.imread(os.path.join(directory, file_prefix + self._filename), 0) # this is grayscale loading with any OpenCV version
+    self._imagedata = cv2.imread(file, 0) # this is grayscale loading with any OpenCV version
 
   def downsample(self, factor):
     '''
