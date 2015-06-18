@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+import cv2
 
 
 
@@ -230,28 +231,41 @@ class RigidModel(AbstractAffineModel):
         of the coordinate system (mostly empty image).
         Returns the image after the transformation, and with the new start_point.
         '''
+        print "Applying rigid transformation on image {}, with start_point {}".format(self.get_matrix(), start_point)
         # Find the bounding box of the image after applying the transformation
         height, width = img.shape
-        points = np.array(
-            [0, 0],
-            [0, height - 1],
-            [width - 1, 0],
-            [width - 1, height - 1])
-        points += np.array(start_point)
+        print "Here0"
+        points = np.vstack([
+            np.array([0, 0]),
+            np.array([0, height - 1]),
+            np.array([width - 1, 0]),
+            np.array([width - 1, height - 1])])
+        print "Here1, points: {}".format(points)
         points = self.apply(points)
-        min_x_y = np.minimum(points)
-        max_x_y = np.maximum(points)
+        print "Here2, points: {}".format(points)
+        points += np.array(start_point)
+        print "Here3, points: {}".format(points)
+        min_x_y = np.amin(points, axis=0)
+        max_x_y = np.amax(points, axis=0)
+        print "min_x_y {}, max_x_y {}".format(min_x_y, max_x_y)
 
         # compute the actual delta we need for the transformation
         # according to the given start_point, and the minimal x and y
         delta_t = self.delta - (min_x_y - np.array(start_point))
-        M = np.float32([
-            [self.cos_val, -self.sin_val, delta_t[0]],
-            [self.sin_val,  self.cos_val, delta_t[1]] ])
+        print "delta_t {}".format(delta_t)
+        M = np.vstack([
+            np.array([self.cos_val, -self.sin_val, delta_t[0]]),
+            np.array([self.sin_val,  self.cos_val, delta_t[1]]) ])
+        print "M: {}".format(M)
+        print "max_x_y - min_x_y: {}".format(tuple((max_x_y - min_x_y).astype(np.int)))
 
+        M2 = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
         # apply the transformation
-        out_img = cv2.warpAffine(img, M, (max_x_y - min_x_y + 1.0).astype(np.int))
+        out_img = cv2.warpAffine(img, M, tuple((max_x_y - min_x_y).astype(np.int)))
+        #out_img = cv2.warpAffine(img, M, (4135, 4135))
+        print "Here4"
         
+        print "Rigid transformation applied. new start_point {}, and img_out shape: {}".format(min_x_y, out_img.shape)
         return out_img, min_x_y
 
 
@@ -396,11 +410,11 @@ class AffineModel(AbstractAffineModel):
     def set_from_modelspec(self, s):
         splitted = s.split()
         # The input is 6 numbers that correspond to m00 m10 m01 m11 m02 m12
-        self.m = np.vstack(
+        self.m = np.vstack([
             np.array([float(d) for d in splitted[0::2]]),
             np.array([float(d) for d in splitted[1::2]]),
             np.array([0.0, 0.0, 1.0])
-            )
+            ])
 
     def get_matrix(self):
         return m
@@ -494,6 +508,51 @@ class AffineModel(AbstractAffineModel):
 
     #     self.m = H / H[2][2]
     #     return True
+
+    def apply_on_image(self, img, start_point):
+        '''
+        Applies the transformation on the given image with a given start_point.
+        The idea is not to render the entire image after transformation,
+        as the image can be quite small but with a large offset from the origin
+        of the coordinate system (mostly empty image).
+        Returns the image after the transformation, and with the new start_point.
+        '''
+        print "Applying affine transformation on image {}, with start_point {}".format(self.m, start_point)
+        # Find the bounding box of the image after applying the transformation
+        height, width = img.shape
+        print "Here0"
+        points = np.vstack([
+            np.array([0, 0]),
+            np.array([0, height - 1]),
+            np.array([width - 1, 0]),
+            np.array([width - 1, height - 1])])
+        print "Here1, points: {}".format(points)
+        points = self.apply(points)
+        print "Here2, points: {}".format(points)
+        points += np.array(start_point)
+        print "Here3, points: {}".format(points)
+        min_x_y = np.amin(points, axis=0)
+        max_x_y = np.amax(points, axis=0)
+        print "min_x_y {}, max_x_y {}".format(min_x_y, max_x_y)
+
+        # compute the actual delta we need for the transformation
+        # according to the given start_point, and the minimal x and y
+        delta_t = np.array([self.m[0][2], self.m[1][2]]) - (min_x_y - np.array(start_point))
+        print "delta_t {}".format(delta_t)
+        M = self.m[:2]
+        print "M: {}".format(M)
+        print "max_x_y - min_x_y: {}".format(tuple((max_x_y - min_x_y).astype(np.int)))
+
+        # apply the transformation
+        out_img = cv2.warpAffine(img, M, tuple((max_x_y - min_x_y).astype(np.int)))
+        #out_img = cv2.warpAffine(img, M, (4135, 4135))
+        print "Here4"
+        
+        print "Affine transformation applied. new start_point {}, and img_out shape: {}".format(min_x_y, out_img.shape)
+        return out_img, min_x_y
+
+
+
 
 
 
