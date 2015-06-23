@@ -4,6 +4,7 @@ import numpy as np
 
 from bounding_box import BoundingBox
 from models import Transforms
+from models import CombinedAffineModel
 
 class Tile(object):
 
@@ -57,10 +58,12 @@ class Tile(object):
     
     # Apply all transformations
     start_point = np.array([0.0, 0.0])
+    combined_transform = CombinedAffineModel()
     for json_transform in self._transforms:
-      #print "Parsing transformation: {}".format(json_transform)
+      # print "Parsing transformation: {}".format(json_transform)
       transform = Transforms.from_tilespec(json_transform)
-      self._image_data, start_point = transform.apply_on_image(self._imagedata, start_point)
+      combined_transform.append(transform)
+    self._image_data, start_point = combined_transform.apply_on_image(self._imagedata, start_point)
     
     return self._image_data, start_point
 

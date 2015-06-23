@@ -31,6 +31,8 @@ class Section(object):
       self._tiles.append(tile)
       self._bbox.extend(tile._bbox)
 
+    # print "section bbox: {}".format(self._bbox.toStr())
+
   def __str__(self):
     '''
     '''
@@ -53,6 +55,8 @@ class Section(object):
     min_x = bbox.from_x
     min_y = bbox.from_y
 
+    min_x = math.ceil(min_x)
+    min_y = math.ceil(min_y)
     # Stitch the tiles
 
     # Find the relevant tiles (according to their bounding box)
@@ -66,29 +70,45 @@ class Section(object):
         # render the tile, and put the image data in the output image
         tile_img, t_start_point = t.render()
 
+        # print "wanted bbox: {}".format(bbox.toStr())
+        # print "tile bbox: {}".format(t._bbox.toStr())
         # Compute the overlapping area of the tile in the out_img (round it to integers)
         overlap_bbox = t._bbox.intersect(bbox)
+        # print "overlap bbox: {}".format(overlap_bbox.toStr())
         overlap_bbox = BoundingBox(
             math.ceil(overlap_bbox.from_x),
             math.floor(overlap_bbox.to_x),
             math.ceil(overlap_bbox.from_y),
             math.floor(overlap_bbox.to_y))
+        # print "overlap bbox (rounded): {}".format(overlap_bbox.toStr())
 
         # crop the image that is out of the wanted bounding box
         tile_img = tile_img[
-            overlap_bbox.from_y - t._bbox.from_y:overlap_bbox.to_y - t._bbox.from_y,
-            overlap_bbox.from_x - t._bbox.from_x:overlap_bbox.to_x - t._bbox.from_x
+            overlap_bbox.from_y - math.ceil(t._bbox.from_y):overlap_bbox.to_y - math.ceil(t._bbox.from_y),
+            overlap_bbox.from_x - math.ceil(t._bbox.from_x):overlap_bbox.to_x - math.ceil(t._bbox.from_x)
+#            overlap_bbox.from_y - t._bbox.from_y:overlap_bbox.to_y - t._bbox.from_y,
+#            overlap_bbox.from_x - t._bbox.from_x:overlap_bbox.to_x - t._bbox.from_x
           ]
+#        print "Getting sub-image from the original at: Y={}:{}, X={}:{}".format(
+#            overlap_bbox.from_y - math.ceil(t._bbox.from_y), overlap_bbox.to_y - math.ceil(t._bbox.from_y),
+#            overlap_bbox.from_x - math.ceil(t._bbox.from_x), overlap_bbox.to_x - math.ceil(t._bbox.from_x))
+##            overlap_bbox.from_y - t._bbox.from_y, overlap_bbox.to_y - t._bbox.from_y,
+##            overlap_bbox.from_x - t._bbox.from_x, overlap_bbox.to_x - t._bbox.from_x)
 
         # Create a mask and an inversed mask of the tile we are going to add
         _, mask = cv2.threshold(tile_img, 1, 255, cv2.THRESH_BINARY)
         mask_inv = cv2.bitwise_not(mask)
+        # print "mask shape: {}".format(mask.shape)
 
         # Set the area that is going to be changed in the output image
         roi = out_img[
             overlap_bbox.from_y - min_y:overlap_bbox.to_y - min_y,
             overlap_bbox.from_x - min_x:overlap_bbox.to_x - min_x
           ]
+#        print "out-image of the output at: Y={}:{}, X={}:{}".format(
+#            overlap_bbox.from_y - min_y, overlap_bbox.to_y - min_y,
+#            overlap_bbox.from_x - min_x, overlap_bbox.to_x - min_x)
+        # print "roi shape: {}".format(roi.shape)
 
         # Now black-out the area of the new image in the output image
         out_bg = cv2.bitwise_and(roi, roi, mask = mask_inv)
@@ -98,9 +118,12 @@ class Section(object):
 
         # Put the new tile image in the main image
         dst = cv2.add(out_bg, tile_fg)
+        # print "dst shape: {}".format(dst.shape)
         out_img[
-            overlap_bbox.from_y - math.ceil(min_y):overlap_bbox.from_y - math.ceil(min_y) + dst.shape[0],
-            overlap_bbox.from_x - math.ceil(min_x):overlap_bbox.from_x - math.ceil(min_x) + dst.shape[1]
+#            overlap_bbox.from_y - math.ceil(min_y):overlap_bbox.from_y - math.ceil(min_y) + dst.shape[0],
+#            overlap_bbox.from_x - math.ceil(min_x):overlap_bbox.from_x - math.ceil(min_x) + dst.shape[1]
+            overlap_bbox.from_y - min_y:overlap_bbox.from_y - min_y + dst.shape[0],
+            overlap_bbox.from_x - min_x:overlap_bbox.from_x - min_x + dst.shape[1]
           ] = dst
 
     # downsample the output image

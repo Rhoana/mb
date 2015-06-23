@@ -148,12 +148,16 @@ class Manager(object):
     self._sections[data_path] = section
 
     meta_info = {}
-    meta_info['width'] = section._bbox.width()
-    meta_info['height'] = section._bbox.height()
     meta_info['layer'] = 0
     meta_info['minLevel'] = 0
     meta_info['maxLevel'] = 1
     meta_info['tileSize'] = Constants.CLIENT_TILE_SIZE
+
+    # Make the openseadragon width and height a multiplication of a tileSize
+    section_width = section._bbox.width()
+    section_height = section._bbox.height()
+    meta_info['width'] = math.ceil(section_width / meta_info['tileSize'] + 1) * meta_info['tileSize']
+    meta_info['height'] = math.ceil(section_height / meta_info['tileSize'] + 1) * meta_info['tileSize']
 
     # print "meta_info is: {}".format(meta_info)
 
@@ -240,18 +244,18 @@ class Manager(object):
     w_c = Constants.CLIENT_TILE_SIZE
     h_c = Constants.CLIENT_TILE_SIZE
 
-    top_left = [x_c, y_c]
-    bottom_right = [x_c+w_c, y_c+h_c]
+    # top_left = [x_c, y_c]
+    # bottom_right = [x_c+w_c, y_c+h_c]
 
     # calculate actual data image coordinates
     real_scale = 2**w
-    image_left = x_c * real_scale
-    image_right = (x_c + w_c) * real_scale
-    image_top = y_c * real_scale
-    image_bottom = (y_c + h_c) * real_scale
+    image_left = (x_c * real_scale) + section._bbox.from_x
+    image_right = ((x_c + w_c) * real_scale) + section._bbox.from_x
+    image_top = (y_c * real_scale) + section._bbox.from_y
+    image_bottom = ((y_c + h_c) * real_scale) + section._bbox.from_y
     wanted_bbox = BoundingBox(image_left, image_right, image_top, image_bottom)
 
-    # print "Rendering section", data_path
+    # print "Rendering section {} with bbox: {}".format(data_path, wanted_bbox.toStr())
     stitched = section.render(wanted_bbox, real_scale)
     
 
@@ -353,6 +357,11 @@ class Manager(object):
     if Constants.CACHE_CLIENT_TILES:
       # print 'Writing OSD tile', osd_file_url_full
       cv2.imwrite(osd_file_url_full, stitched)
+
+    # For debugging
+    #osd_file_url = data_path.replace('/', '_') + '_' + str(x) + '_' + str(y) + '_' + str(z) + '_' + str(w) + '.jpg'
+    #osd_file_url_full = os.path.join('/tmp/Adi/', osd_file_url)
+    #cv2.imwrite(osd_file_url_full, stitched)
 
     return cv2.imencode('.jpg', stitched)[1].tostring()
 
