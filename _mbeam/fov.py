@@ -115,6 +115,8 @@ class FoV(object):
     self._width = width
     self._height = height
 
+    print width, height
+
 
   @staticmethod
   def filter_duplicate_lines(lines):

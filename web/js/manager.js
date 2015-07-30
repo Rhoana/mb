@@ -7,6 +7,7 @@ D.manager = function() {
   // the three OSD viewers for prev, current and next
   this._prev_viewer = null;
   this._viewer = null;
+  this._meta_info = null;
   this._next_viewer = null;
 
   // the contrast value
@@ -220,6 +221,7 @@ D.manager.prototype.create_viewer = function(page, visible) {
   }).responseText;
 
   meta_info = JSON.parse(meta_info);
+  this._meta_info = meta_info;
 
   ts.width = meta_info.width;
   ts.height = meta_info.height;
@@ -227,7 +229,6 @@ D.manager.prototype.create_viewer = function(page, visible) {
   ts.maxLevel = meta_info.maxLevel;
   ts.tileSize = meta_info.tileSize;
   ts.layer = meta_info.layer;
-
 
   var viewer = OpenSeadragon({
       id:            container_id,

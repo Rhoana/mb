@@ -22,9 +22,99 @@
 
       MANAGER = new D.manager();
 
+
+    var hover_timeout = null;
+    window.onmousemove = function(e) {
+
+      if (hover_timeout) {
+        clearTimeout(hover_timeout);
+      }
+
+      hover_timeout = setTimeout(function() {
+
+        // console.log('Hovering', e.clientX, e.clientY);
+
+        var p = new OpenSeadragon.Point(e.clientX, e.clientY);
+
+        var viewer = MANAGER._viewer;
+        var viewport = viewer.viewport;
+        var p_image = viewport.windowToImageCoordinates(p);
+
+        var data_path = MANAGER._data_path;
+        // var tile_size = MANAGER._meta_info.tileSize;
+
+        // var osd_w = 1;
+        // var osd_x = Math.floor(p_image.x / tile_size);
+        // var osd_y = Math.floor(p_image.y / tile_size);
+        // var osd_z = 0;
+        var i = parseInt(p_image.x, 10);
+        var j = parseInt(p_image.y, 10);
+
+        console.log('I,J',i,j)
+
+        if (i<0) return;
+        if (j<0) return;
+
+        // var url = data_path + '/' + osd_w + '-' + osd_x + '-' + osd_y + '-' + osd_z + '-' + i + '-' + j;
+        var url = data_path + '/' + i + '-' + j;
+
+        var contents = $.ajax({
+            type: "GET",
+            url: 'query/' + url
+          }).done(function() {
+            
+            // console.log(contents.responseText)
+            var width = MANAGER._meta_info['width'];
+            var height = MANAGER._meta_info['height'];
+
+            var tile_meta = JSON.parse(contents.responseText);
+            // console.log(tile_meta)
+
+            var w = tile_meta.size[0] // width;
+            var h = tile_meta.size[1] // height;
+            var x = tile_meta.top_left[0] // width;
+            var y = tile_meta.top_left[1] // height;
+
+
+            overlay(x,y,w,h);
+
+          }.bind(this));        
+        
+
+
+      }, 200);
+
+    }
+
     }
 
 
+
+
+    var current_overlay = null;
+
+    function overlay(x,y,w,h) {
+
+      if (current_overlay) {
+        MANAGER._viewer.removeOverlay("runtime-overlay");
+      }
+
+
+      var elt = document.createElement("div");
+      elt.id = "runtime-overlay";
+      elt.className = "highlight";
+      MANAGER._viewer.addOverlay({
+          element: elt,
+          px: x,
+          py: y,
+          width: w,
+          height: h
+          // location: new OpenSeadragon.Rect(x,y,w,h)
+      });
+        
+      current_overlay = '1';
+    
+      }
 
     </script>
   </head>

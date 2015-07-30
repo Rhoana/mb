@@ -101,14 +101,10 @@ class WebServer:
 
       tile = splitted_request[-1].split('-')
 
-      x = int(tile[1])
-      y = int(tile[2])
-      z = int(tile[3])
-      w = int(tile[0])
-      i = int(tile[4])
-      j = int(tile[5])
+      i = int(tile[0])
+      j = int(tile[1])
 
-      content = self._manager.get_query(path, x, y, z, w, i, j)
+      content = self._manager.get_query(path, i, j)
       content_type = 'text/html'
 
     elif splitted_request[1] == 'data':

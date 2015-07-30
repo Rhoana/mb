@@ -66,7 +66,7 @@ class View(object):
         normalized_w = t._width / ratio_x
         normalized_h = t._height / ratio_y
         
-        tiles[fov.id+t.id] = {'tile': t, 'fov':fov.id, 'tx': normalized_tx, 'ty': normalized_ty, 'width': normalized_w, 'height': normalized_h}
+        tiles[fov.id+t.id] = {'tile': t, 'fov':fov.id, 'fov_tx': fov._tx, 'fov_ty': fov._ty, 'tx': normalized_tx, 'ty': normalized_ty, 'width': normalized_w, 'height': normalized_h}
 
     #
     # create a new View

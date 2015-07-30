@@ -28,6 +28,8 @@ class Manager(object):
     self._tiles = OrderedDict() # tile cache
     self._tile_cache_size = 61*5 # enough for 1 MFOV for 5 parallel users
 
+    self._kd_tree_data = {}
+
     self._kd_trees = {}
     self._bbox_to_tile = {}
 
@@ -168,29 +170,33 @@ class Manager(object):
     return meta_info
 
 
-  def get_query(self, data_path, x, y, z, w, i, j):
+  def get_query(self, data_path, i, j):
     '''
     '''
 
-    # grab the kd tree for this OSD tile
-    kd_tree = self._kd_trees[data_path][str(x)+'-'+str(y)+'-'+str(z)+'-'+str(w)]
+    print 'Probing', i, j
+
+    #
+    # create kd tree
+    #
+    data = self._kd_tree_data[data_path]
+    data_without_key = [v[:2] for v in data]
+    kd_tree = KDTree(data_without_key)
 
     # now look up the closest point to i,j
-    query_result = kd_tree.query([float(i), float(j)])[1]
-    print 'Found', query_result
+    query_result = kd_tree.query([float(i), float(j)])
+    print 'Found', query_result[1]
 
-    if len(query_result.shape) > 0:
-      query_result = query_result[0]
 
-    point = kd_tree.data[query_result]
+    tile = data[query_result[1]]
+    print 'Found tile', tile
+    
+    # # now look up this border point in out bbox-to-tile dict
+    # tile = self._bbox_to_tile[data_path][str(point[0])+'-'+str(point[1])]
 
-    print 'Which matches:', point
-    # now look up this border point in out bbox-to-tile dict
-    tile = self._bbox_to_tile[data_path][str(point[0])+'-'+str(point[1])]
+    # print 'Finding tile', tile
 
-    print 'Finding tile', tile
-
-    return tile
+    return json.dumps(tile[2])
 
 
   def get_image(self, data_path, x, y, z, w):
@@ -266,10 +272,8 @@ class Manager(object):
     required_tiles_keys = sorted(required_tiles, key=lambda key: required_tiles[key])
 
     #
-    if not data_path in self._kd_trees:
-      self._kd_trees[data_path] = {}
-    if not data_path in self._bbox_to_tile:
-      self._bbox_to_tile[data_path] = {}
+    if not data_path in self._kd_tree_data:
+      self._kd_tree_data[data_path] = []
 
     bounding_coords = []
 
@@ -332,11 +336,29 @@ class Manager(object):
       #
       # store the top left and bottom right for each image in the kdtree
       #
-      bounding_coords.append([stitched_x, stitched_y])
-      bounding_coords.append([stitched_x+stitched_w, stitched_y+stitched_h])
+      kdtree_x = tile_dict['tx']
+      kdtree_y = tile_dict['ty']
+      kdtree_x2 = tile_dict['tx'] + tile_dict['width']
+      kdtree_y2 = tile_dict['ty'] + tile_dict['height']
 
-      self._bbox_to_tile[data_path][str(stitched_x)+'-'+str(stitched_y)] = t
-      self._bbox_to_tile[data_path][str(stitched_x+stitched_w)+'-'+str(stitched_y+stitched_h)] = t
+      # store four pairs of coordinates associated with the tile key
+      # self._kd_tree_data[data_path].append([kdtree_x, kdtree_y, t])
+      # self._kd_tree_data[data_path].append([kdtree_x, kdtree_y2, t])
+      # self._kd_tree_data[data_path].append([kdtree_x2, kdtree_y, t])
+      # self._kd_tree_data[data_path].append([kdtree_x2, kdtree_y2, t])
+
+      tile_meta = {'file_name':t,
+                   'top_left': [kdtree_x, kdtree_y],
+                   'size': [tile_dict['width'], tile_dict['height']]
+                  }
+
+      self._kd_tree_data[data_path].append([kdtree_x + tile_dict['width']/2, kdtree_y + tile_dict['height']/2, tile_meta])
+
+      # bounding_coords.append([stitched_x, stitched_y])
+      # bounding_coords.append([stitched_x+stitched_w, stitched_y+stitched_h])
+
+      # self._bbox_to_tile[data_path][str(stitched_x)+'-'+str(stitched_y)] = t
+      # self._bbox_to_tile[data_path][str(stitched_x+stitched_w)+'-'+str(stitched_y+stitched_h)] = t
 
 
     if Constants.INVERT:
@@ -347,8 +369,8 @@ class Manager(object):
       cv2.imwrite(osd_file_url_full, stitched)
 
     # store the meta
-    if len(bounding_coords) > 0:
-      self._kd_trees[data_path][str(x)+'-'+str(y)+'-'+str(z)+'-'+str(w)] = KDTree(bounding_coords)
+    # if len(bounding_coords) > 0:
+      # self._kd_trees[data_path][str(x)+'-'+str(y)+'-'+str(z)+'-'+str(w)] = KDTree(bounding_coords)
     # print 'Stored meta'
 
     return cv2.imencode('.jpg', stitched)[1].tostring()
