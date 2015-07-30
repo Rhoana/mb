@@ -44,6 +44,7 @@ class WebServer:
       (r'/content/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/metainfo/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/data/(.*)', WebServerHandler, dict(webserver=self)),
+      (r'/query/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/(.*)', tornado.web.StaticFileHandler, dict(path=os.path.join(os.path.dirname(__file__),'../web'), default_filename='index.html'))
   
     ])
@@ -92,6 +93,22 @@ class WebServer:
     elif splitted_request[1] == 'metainfo':
 
       content = self._manager.get_meta_info(path)
+      content_type = 'text/html'
+
+    elif splitted_request[1] == 'query':
+
+      path = '/'.join(splitted_request[2:-1])
+
+      tile = splitted_request[-1].split('-')
+
+      x = int(tile[1])
+      y = int(tile[2])
+      z = int(tile[3])
+      w = int(tile[0])
+      i = int(tile[4])
+      j = int(tile[5])
+
+      content = self._manager.get_query(path, x, y, z, w, i, j)
       content_type = 'text/html'
 
     elif splitted_request[1] == 'data':

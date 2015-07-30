@@ -237,6 +237,7 @@ D.manager.prototype.create_viewer = function(page, visible) {
       showNavigationControl: false,
       imageLoaderLimit: 3,
       tileSources:   ts
+      // debugMode: true
     });
 
   viewer.innerTracker.keyHandler = null;

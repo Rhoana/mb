@@ -6,6 +6,7 @@ import multiprocessing as mp
 import numpy as np
 import os
 import time
+from scipy.spatial import KDTree
 
 from collections import OrderedDict
 
@@ -26,6 +27,9 @@ class Manager(object):
 
     self._tiles = OrderedDict() # tile cache
     self._tile_cache_size = 61*5 # enough for 1 MFOV for 5 parallel users
+
+    self._kd_trees = {}
+    self._bbox_to_tile = {}
 
     self._client_tiles = {}
 
@@ -164,6 +168,31 @@ class Manager(object):
     return meta_info
 
 
+  def get_query(self, data_path, x, y, z, w, i, j):
+    '''
+    '''
+
+    # grab the kd tree for this OSD tile
+    kd_tree = self._kd_trees[data_path][str(x)+'-'+str(y)+'-'+str(z)+'-'+str(w)]
+
+    # now look up the closest point to i,j
+    query_result = kd_tree.query([float(i), float(j)])[1]
+    print 'Found', query_result
+
+    if len(query_result.shape) > 0:
+      query_result = query_result[0]
+
+    point = kd_tree.data[query_result]
+
+    print 'Which matches:', point
+    # now look up this border point in out bbox-to-tile dict
+    tile = self._bbox_to_tile[data_path][str(point[0])+'-'+str(point[1])]
+
+    print 'Finding tile', tile
+
+    return tile
+
+
   def get_image(self, data_path, x, y, z, w):
     '''
     Calculate which file(s) we need for the current openseadragon tile
@@ -236,6 +265,14 @@ class Manager(object):
     # sort the required tiles to always give priority in the same order
     required_tiles_keys = sorted(required_tiles, key=lambda key: required_tiles[key])
 
+    #
+    if not data_path in self._kd_trees:
+      self._kd_trees[data_path] = {}
+    if not data_path in self._bbox_to_tile:
+      self._bbox_to_tile[data_path] = {}
+
+    bounding_coords = []
+
     for t in required_tiles_keys:
 
       tile_dict = required_tiles[t]
@@ -292,11 +329,26 @@ class Manager(object):
 
       stitched[stitched_y:stitched_y+stitched_h, stitched_x:stitched_x+stitched_w] = current_tile[t_sub_y:t_sub_y+stitched_h, t_sub_x:t_sub_x+stitched_w]
 
+      #
+      # store the top left and bottom right for each image in the kdtree
+      #
+      bounding_coords.append([stitched_x, stitched_y])
+      bounding_coords.append([stitched_x+stitched_w, stitched_y+stitched_h])
+
+      self._bbox_to_tile[data_path][str(stitched_x)+'-'+str(stitched_y)] = t
+      self._bbox_to_tile[data_path][str(stitched_x+stitched_w)+'-'+str(stitched_y+stitched_h)] = t
+
+
     if Constants.INVERT:
       stitched = 255-stitched
 
     if Constants.CACHE_CLIENT_TILES:
       # print 'Writing OSD tile', osd_file_url_full
       cv2.imwrite(osd_file_url_full, stitched)
+
+    # store the meta
+    if len(bounding_coords) > 0:
+      self._kd_trees[data_path][str(x)+'-'+str(y)+'-'+str(z)+'-'+str(w)] = KDTree(bounding_coords)
+    # print 'Stored meta'
 
     return cv2.imencode('.jpg', stitched)[1].tostring()
