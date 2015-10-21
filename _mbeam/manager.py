@@ -320,6 +320,12 @@ class Manager(object):
       t_sub_x = int(max(tx, top_left[0]) - tx)
       t_sub_y = int(max(ty, top_left[1]) - ty)
 
+      # lookup pixel values
+      if Constants.APPLY_LUT:
+        if view._luts:
+          current_tile = view._luts[tile._filename][current_tile]
+
+
       stitched[stitched_y:stitched_y+stitched_h, stitched_x:stitched_x+stitched_w] = current_tile[t_sub_y:t_sub_y+stitched_h, t_sub_x:t_sub_x+stitched_w]
 
       #
@@ -336,7 +342,6 @@ class Manager(object):
                   }
 
       self._kd_tree_data[data_path].append([kdtree_x + tile_dict['width']/2, kdtree_y + tile_dict['height']/2, tile_meta])
-
 
     if Constants.INVERT:
       stitched = 255-stitched

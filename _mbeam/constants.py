@@ -8,4 +8,5 @@ class Constants(object):
   CACHE_CLIENT_TILES = False
   CLIENT_TILE_CACHE_FOLDER = '/tmp/'
   DEFAULT_DATA_FOLDER = '/Volumes/DATA1/'#'/Users/d/Desktop/data/'
-  
+  APPLY_LUT = False
+  LUT_FILE_SUFFIX = '_luts.txt'  
