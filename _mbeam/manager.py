@@ -173,9 +173,6 @@ class Manager(object):
   def get_query(self, data_path, i, j):
     '''
     '''
-
-    print 'Probing', i, j
-
     #
     # create kd tree
     #
@@ -185,16 +182,8 @@ class Manager(object):
 
     # now look up the closest point to i,j
     query_result = kd_tree.query([float(i), float(j)])
-    print 'Found', query_result[1]
-
 
     tile = data[query_result[1]]
-    print 'Found tile', tile
-    
-    # # now look up this border point in out bbox-to-tile dict
-    # tile = self._bbox_to_tile[data_path][str(point[0])+'-'+str(point[1])]
-
-    # print 'Finding tile', tile
 
     return json.dumps(tile[2])
 
@@ -341,24 +330,12 @@ class Manager(object):
       kdtree_x2 = tile_dict['tx'] + tile_dict['width']
       kdtree_y2 = tile_dict['ty'] + tile_dict['height']
 
-      # store four pairs of coordinates associated with the tile key
-      # self._kd_tree_data[data_path].append([kdtree_x, kdtree_y, t])
-      # self._kd_tree_data[data_path].append([kdtree_x, kdtree_y2, t])
-      # self._kd_tree_data[data_path].append([kdtree_x2, kdtree_y, t])
-      # self._kd_tree_data[data_path].append([kdtree_x2, kdtree_y2, t])
-
       tile_meta = {'file_name':t,
                    'top_left': [kdtree_x, kdtree_y],
                    'size': [tile_dict['width'], tile_dict['height']]
                   }
 
       self._kd_tree_data[data_path].append([kdtree_x + tile_dict['width']/2, kdtree_y + tile_dict['height']/2, tile_meta])
-
-      # bounding_coords.append([stitched_x, stitched_y])
-      # bounding_coords.append([stitched_x+stitched_w, stitched_y+stitched_h])
-
-      # self._bbox_to_tile[data_path][str(stitched_x)+'-'+str(stitched_y)] = t
-      # self._bbox_to_tile[data_path][str(stitched_x+stitched_w)+'-'+str(stitched_y+stitched_h)] = t
 
 
     if Constants.INVERT:
@@ -368,9 +345,5 @@ class Manager(object):
       # print 'Writing OSD tile', osd_file_url_full
       cv2.imwrite(osd_file_url_full, stitched)
 
-    # store the meta
-    # if len(bounding_coords) > 0:
-      # self._kd_trees[data_path][str(x)+'-'+str(y)+'-'+str(z)+'-'+str(w)] = KDTree(bounding_coords)
-    # print 'Stored meta'
 
     return cv2.imencode('.jpg', stitched)[1].tostring()

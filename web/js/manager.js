@@ -354,29 +354,13 @@ D.manager.prototype.propagate_viewpoint = function(event) {
 
 D.manager.prototype.store_viewpoint = function(event) {
 
-  // propagate the current viewport to the previous and the next viewers
-
-  // console.log('propagating viewport', event.eventSource.id)
 
   if (!this._viewer) return;
-
-
 
   var center = this._viewer.viewport.getCenter();
   var zoom = this._viewer.viewport.getZoom();
 
   window.history.pushState("Moved", this._data_path, "?data="+this._data_path+"&center="+center.x+","+center.y+"&zoom="+zoom+"&contrast="+this._contrast+"&brightness="+this._brightness);
-
-  // return
-  // if (this._prev_viewer) {
-  //   this._prev_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
-  //   this._prev_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
-  // }
-
-  // if (this._next_viewer) {
-  //   this._next_viewer.viewport.panTo(this._viewer.viewport.getCenter(), true);
-  //   this._next_viewer.viewport.zoomTo(this._viewer.viewport.getZoom(), null, true);    
-  // }
 
 };
 
@@ -447,19 +431,12 @@ D.manager.prototype.move = function(sign) {
     }
 
     // the next viewer is set to the current one
-    var old_viewer = this._viewer;
-    // old_viewer.removeAllHandlers('pan');
-    // old_viewer.removeAllHandlers('zoom');          
+    var old_viewer = this._viewer;        
     this._next_viewer = this._viewer;
-    // this._next_viewer.removeAllHandlers('pan');
-    // this._next_viewer.removeAllHandlers('zoom'); 
+
 
     // the current viewer is set to the previous one
     this._viewer = this._prev_viewer;
-
-    // this._viewer.addHandler('pan', this.propagate_viewport.bind(this));
-    // this._viewer.addHandler('zoom', this.propagate_viewport.bind(this));
-
 
     // and the previous viewer shall be a new one
     if (this._page-1 < 0) {
@@ -487,15 +464,7 @@ D.manager.prototype.prev = function() {
   this._page--;
   var new_container = '#viewer_'+this._page;
   
-  // 
   this._controller._data = this._content[this._page].data_path;
-  // CCC[this._page].width = CCC[0].width
-  // CCC[this._page].height = CCC[0].height
-  // CCC[this._page].layer = 0;
-
-  // this._viewer.destroy();
-
-  // var new_viewer = this.create_viewer(this._page, false);
 
   this._viewers.push(this.create_viewer(this._page-1, false));
 
