@@ -220,6 +220,7 @@ D.manager.prototype.create_viewer = function(page, visible) {
   }).responseText;
 
   meta_info = JSON.parse(meta_info);
+  console.log(meta_info);
 
   ts.width = meta_info.width;
   ts.height = meta_info.height;
@@ -228,6 +229,40 @@ D.manager.prototype.create_viewer = function(page, visible) {
   ts.tileSize = meta_info.tileSize;
   ts.layer = meta_info.layer;
 
+  // Add all overlayed fov ids to the center of each fov
+  var span = document.getElementById('overlays');
+  if (! span) {
+    var body = document.getElementById('body');
+    new_span = document.createElement("SPAN");
+    new_span.setAttribute("id", "overlays");
+    body.appendChild( new_span );
+    span = new_span;
+  }
+  while( span.firstChild ) {
+    span.removeChild( span.firstChild );
+  }
+
+  if (typeof meta_info.centers !== "undefined") {
+    os = new Array(meta_info.centers.length);
+    for (var i = 0; i < meta_info.centers.length; i++) {
+      os[i] = {
+                id: 'html-overlay-' + i,
+                px: meta_info.centers[i][0],
+                py: meta_info.centers[i][1],
+                /*x: meta_info.centers[i][0] / this._content[0].width,
+                y: meta_info.centers[i][1] / this._content[0].height, */
+                width: 0.1,
+                height: 0.1
+              };
+      new_div = document.createElement("DIV");
+      new_div.setAttribute("id", "html-overlay-" + i );
+      new_div.appendChild(document.createTextNode(meta_info.centers[i][2]));
+      span.appendChild( new_div );
+    }
+    console.log(os);
+  } else {
+    os = new Array();
+  }
 
   var viewer = OpenSeadragon({
       id:            container_id,
@@ -236,7 +271,8 @@ D.manager.prototype.create_viewer = function(page, visible) {
       maxZoomPixelRatio: 10,
       showNavigationControl: false,
       imageLoaderLimit: 3,
-      tileSources:   ts
+      tileSources:   ts,
+      overlays: os
     });
 
   viewer.innerTracker.keyHandler = null;
@@ -509,3 +545,4 @@ D.manager.prototype.refresh_viewer = function() {
   this._viewer.world.resetItems();
 
 };
+

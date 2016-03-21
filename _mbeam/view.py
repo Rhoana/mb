@@ -1,11 +1,12 @@
 import math
 import os
+import sys
 
 from constants import Constants
 
 class View(object):
 
-  def __init__(self, data_path, tx, ty, width, height, fovs, tiles):
+  def __init__(self, data_path, tx, ty, width, height, fovs, tiles, centers):
     '''
     '''
     self._data_path = data_path
@@ -17,6 +18,7 @@ class View(object):
     self._ty = ty
     self._width = width
     self._height = height
+    self._centers = centers
 
   @property
   def fovs(self):
@@ -51,12 +53,17 @@ class View(object):
     w_height = height / ratio_y
     w_tx = tx / ratio_x
     w_ty = ty / ratio_y
+    w_centers = []
 
 
     # now create the normalized index of all involved tiles
     tiles = {}
 
     for fov in fovs:
+      normalized_minX = sys.maxint
+      normalized_minY = sys.maxint
+      normalized_maxX = -sys.maxint
+      normalized_maxY = -sys.maxint
 
       for t in fov._tiles:
 
@@ -68,8 +75,15 @@ class View(object):
         
         tiles[fov.id+t.id] = {'tile': t, 'fov':fov.id, 'tx': normalized_tx, 'ty': normalized_ty, 'width': normalized_w, 'height': normalized_h}
 
+        normalized_minX = min(normalized_minX, normalized_tx)
+        normalized_minY = min(normalized_minY, normalized_ty)
+        normalized_maxX = max(normalized_maxX, normalized_tx + normalized_w)
+        normalized_maxY = max(normalized_maxY, normalized_ty + normalized_h)
+
+      w_centers.append([(normalized_minX + normalized_maxX) / 2.0, (normalized_minY + normalized_maxY) / 2.0, fov.id])
+
     #
     # create a new View
     #
-    return View(data_path, w_tx, w_ty, w_width, w_height, fovs, tiles)
+    return View(data_path, w_tx, w_ty, w_width, w_height, fovs, tiles, w_centers)
 

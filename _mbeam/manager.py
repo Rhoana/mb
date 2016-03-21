@@ -160,6 +160,7 @@ class Manager(object):
     meta_info['minLevel'] = 0
     meta_info['maxLevel'] = 1
     meta_info['tileSize'] = Constants.CLIENT_TILE_SIZE
+    meta_info['centers'] = view._centers
 
     return meta_info
 
