@@ -12,6 +12,3 @@ def main():
 
     webserver = mbeam.WebServer(manager, port)
     webserver.start()
-
-if __name__ == "__main__":
-    main()
