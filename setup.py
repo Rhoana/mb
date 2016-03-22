@@ -19,7 +19,9 @@ setup(
     description="mb",
     long_description=README,
     install_requires=[
+        "scandir>=1.1",
         "numpy>=1.9.3",
+        "scipy>=0.16.0",
         "tornado>=4.3",
     ],
     entry_points=dict(console_scripts=['mbeam = mbeam.cli:main']),
