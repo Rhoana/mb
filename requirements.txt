@@ -1,0 +1,4 @@
+numpy==1.9.3
+scandir==1.1
+scipy==0.16.0
+tornado==4.3
