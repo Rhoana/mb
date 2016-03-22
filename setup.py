@@ -13,11 +13,13 @@ setup(
     name='mbeam',
     version=VERSION,
     packages=find_packages(),
+    package_data={'mbeam': ['web/*.*']},
     author='Daniel Haehn',
     author_email='haehn@seas.harvard.edu',
     url="https://github.com/haehn/mb",
     description="mb",
     long_description=README,
+    include_package_data=True,
     install_requires=[
         "scandir>=1.1",
         "numpy>=1.9.3",

@@ -1,0 +1,3 @@
+include README.md
+exclude requirements.txt
+recursive-include mbeam/web *
