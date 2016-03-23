@@ -1,4 +1,3 @@
-import numpy as np
 import os
 import sys
 
@@ -6,116 +5,118 @@ import sys
 from fov import FoV
 from util import Util
 
+
 class Section(object):
 
-  def __init__(self, directory, fovs, calculate_bounding_box):
-    '''
-    '''
-    self._directory = directory
+    def __init__(self, directory, fovs, calculate_bounding_box):
+        '''
+        '''
+        self._directory = directory
+        self._calculate_bounding_box = calculate_bounding_box
 
-    self._fovs = fovs
+        self._fovs = fovs
 
-    self._tx = -1
-    self._ty = -1
-    self._tz = -1
-    self._width = -1
-    self._height = -1
+        self._tx = -1
+        self._ty = -1
+        self._tz = -1
+        self._width = -1
+        self._height = -1
 
-    if calculate_bounding_box:
-      # calculate these values
-      self.update_bounding_box()
+        if calculate_bounding_box:
+            # calculate these values
+            self.update_bounding_box()
 
+        self._imagedata = None
+        self._thumbnail = None
 
-    self._imagedata = None
-    self._thumbnail = None
+    def __str__(self):
+        '''
+        '''
+        return 'Section ' + self.id + ' with ' + \
+            str(len(self._fovs)) + ' FoVs.'
 
-  def __str__(self):
-    '''
-    '''
-    return 'Section ' + self.id + ' with ' + str(len(self._fovs)) + ' FoVs.'
+    @property
+    def id(self):
+        return self._directory.strip(os.sep).split(os.sep)[-1]
 
+    def update_bounding_box(self):
+        '''
+        '''
+        width = 0
+        height = 0
 
-  @property
-  def id(self):
-    return self._directory.strip(os.sep).split(os.sep)[-1]
-    
+        minX = sys.maxsize
+        minY = sys.maxsize
 
-  def update_bounding_box(self):
-    '''
-    '''
-    width = 0
-    height = 0
+        for f in self._fovs:
 
-    minX = sys.maxint
-    minY = sys.maxint
+            offset_x = f._tx
+            offset_y = f._ty
 
-    for f in self._fovs:
+            minX = min(minX, offset_x)
+            minY = min(minY, offset_y)
 
-      offset_x = f._tx
-      offset_y = f._ty
+        for f in self._fovs:
 
-      minX = min(minX, offset_x)
-      minY = min(minY, offset_y)
+            offset_x = f._tx
+            offset_y = f._ty
 
-    for f in self._fovs:
+            width = max(width, f._width + offset_x - minX)
+            height = max(height, f._height + offset_y - minY)
 
-      offset_x = f._tx
-      offset_y = f._ty
+        self._width = width  # - minX
+        self._height = height  # - minY
+        self._tx = minX
+        self._ty = minY
 
-      width = max(width, f._width+offset_x-minX)
-      height = max(height, f._height+offset_y-minY)    
+    def index_fovs(self):
+        '''
+        '''
+        fovs = []
 
-    self._width = width #- minX
-    self._height = height #- minY
-    self._tx = minX
-    self._ty = minY
+        for f in Util.listdir(self._directory):
+            fov_path = os.path.join(self._directory, f)
 
-  def index_fovs(self):
-    '''
-    '''
-    fovs = []
+            # if not os.path.isdir(fov_path):
+            #   # fovs always reside in directories
+            #   continue
 
-    for f in Util.listdir(directory):
-      fov_path = os.path.join(directory, f)
+            fov = FoV.from_directory(fov_path, self._calculate_bounding_box)
+            if fov:
+                fovs.append(fov)
 
-      # if not os.path.isdir(fov_path):
-      #   # fovs always reside in directories
-      #   continue
+        self._fovs = fovs
 
-      fov = FoV.from_directory(fov_path, calculate_bounding_box)
-      if fov:
-        fovs.append(fov)
+    @staticmethod
+    def from_directory(
+            directory,
+            calculate_bounding_box=False,
+            index_subdirs=True):
+        '''
+        Loads a section from a directory without loading any images.
 
-    self._fovs = fovs
+        If the directory does not seem to be a section or is not ready,
+        return None.
+        '''
 
+        if index_subdirs:
 
-  @staticmethod
-  def from_directory(directory, calculate_bounding_box=False, index_subdirs=True):
-    '''
-    Loads a section from a directory without loading any images.
+            fovs = []
 
-    If the directory does not seem to be a section or is not ready,
-    return None.
-    '''
+            for f in Util.listdir(directory):
+                fov_path = os.path.join(directory, f)
 
-    if index_subdirs:
-  
-      fovs = []
+                # if not os.path.isdir(fov_path):
+                #   # fovs always reside in directories
+                #   continue
 
-      for f in Util.listdir(directory):
-        fov_path = os.path.join(directory, f)
+                fov = FoV.from_directory(fov_path, calculate_bounding_box)
+                if fov:
+                    fovs.append(fov)
 
-        # if not os.path.isdir(fov_path):
-        #   # fovs always reside in directories
-        #   continue
+        else:
 
-        fov = FoV.from_directory(fov_path, calculate_bounding_box)
-        if fov:
-          fovs.append(fov)
+            fovs = None
 
-    else:
-
-      fovs = None
-
-    section = Section(directory, fovs, calculate_bounding_box)
-    return section
+        section = Section(directory, fovs, calculate_bounding_box)
+        return section
