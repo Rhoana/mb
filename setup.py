@@ -24,7 +24,6 @@ setup(
         "argparse>=1.4.0",
         "scandir>=1.1",
         "numpy>=1.9.3",
-        "scipy>=0.16.0",
         "tornado>=4.3",
         "PyYAML>=3.10",
     ],
