@@ -24,11 +24,12 @@ class WebServerHandler(tornado.web.RequestHandler):
 
 class WebServer:
 
-  def __init__( self, manager, port=2001 ):
+  def __init__(self, manager, port=2001, address='127.0.0.1'):
     '''
     '''
     self._manager = manager
     self._port = port
+    self._address = address
 
   def start( self ):
     '''
@@ -36,6 +37,7 @@ class WebServer:
 
     ip = socket.gethostbyname('')
     port = self._port
+    address = self._address
 
     webapp = tornado.web.Application([
       
@@ -48,7 +50,7 @@ class WebServer:
   
     ])
 
-    webapp.listen(port, max_buffer_size=1024*1024*150000)
+    webapp.listen(port, address=address, max_buffer_size=1024*1024*150000)
 
     print 'Starting webserver at \033[93mhttp://' + ip + ':' + str(port) + '\033[0m'
 
