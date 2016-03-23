@@ -25,6 +25,7 @@ setup(
         "numpy>=1.9.3",
         "scipy>=0.16.0",
         "tornado>=4.3",
+        "PyYAML>=3.10",
     ],
     entry_points=dict(console_scripts=['mbeam = mbeam.cli:main']),
     zip_safe=False

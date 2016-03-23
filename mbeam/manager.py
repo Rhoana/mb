@@ -9,7 +9,7 @@ import time
 
 from collections import OrderedDict
 
-from constants import Constants
+from mbeam import settings
 from fov import FoV
 from scan import Scan
 from section import Section
@@ -44,13 +44,13 @@ class Manager(object):
     # level 1: this is a section
     # level 2: this is a scan
 
-    if os.path.exists(os.path.join(data_path, Constants.IMAGE_COORDINATES_FILE)):
+    if os.path.exists(os.path.join(data_path, settings.IMAGE_COORDINATES_FILE)):
       return 'FOV'
 
-    if os.path.exists(os.path.join(data_path, Util.get_first_level_subdir(data_path), Constants.IMAGE_COORDINATES_FILE)):
+    if os.path.exists(os.path.join(data_path, Util.get_first_level_subdir(data_path), settings.IMAGE_COORDINATES_FILE)):
       return 'SECTION'
 
-    if os.path.exists(os.path.join(data_path, Util.get_second_level_subdir(data_path), Constants.IMAGE_COORDINATES_FILE)):
+    if os.path.exists(os.path.join(data_path, Util.get_second_level_subdir(data_path), settings.IMAGE_COORDINATES_FILE)):
       return 'SCAN'
 
     return None
@@ -61,7 +61,7 @@ class Manager(object):
     '''
 
     if not data_path:
-      data_path = Constants.DEFAULT_DATA_FOLDER
+      data_path = settings.DEFAULT_DATA_FOLDER
 
     dir_content = sorted(Util.listdir(data_path))
 
@@ -159,7 +159,7 @@ class Manager(object):
     meta_info['layer'] = 0
     meta_info['minLevel'] = 0
     meta_info['maxLevel'] = 1
-    meta_info['tileSize'] = Constants.CLIENT_TILE_SIZE
+    meta_info['tileSize'] = settings.CLIENT_TILE_SIZE
     meta_info['centers'] = view._centers
 
     return meta_info
@@ -176,10 +176,10 @@ class Manager(object):
 
 
 
-    if Constants.CACHE_CLIENT_TILES:
+    if settings.CACHE_CLIENT_TILES:
       
       osd_file_url = data_path.replace('/', '_') + '_' + str(x) + '_' + str(y) + '_' + str(z) + '_' + str(w) + '.jpg'
-      osd_file_url_full = os.path.join(Constants.CLIENT_TILE_CACHE_FOLDER, osd_file_url)
+      osd_file_url_full = os.path.join(settings.CLIENT_TILE_CACHE_FOLDER, osd_file_url)
 
       if os.path.exists(osd_file_url_full):
 
@@ -193,10 +193,10 @@ class Manager(object):
     view = self._views[data_path]
 
     # calculate canvas coordinates
-    x_c = x*Constants.CLIENT_TILE_SIZE
-    y_c = y*Constants.CLIENT_TILE_SIZE
-    w_c = Constants.CLIENT_TILE_SIZE
-    h_c = Constants.CLIENT_TILE_SIZE
+    x_c = x*settings.CLIENT_TILE_SIZE
+    y_c = y*settings.CLIENT_TILE_SIZE
+    w_c = settings.CLIENT_TILE_SIZE
+    h_c = settings.CLIENT_TILE_SIZE
 
     top_left = [x_c, y_c]
     bottom_right = [x_c+w_c, y_c+h_c]
@@ -225,13 +225,13 @@ class Manager(object):
       if overlapping:
         required_tiles[t] = tile_dict
 
-    stitched_w = min(view._width / 2**w -x_c, Constants.CLIENT_TILE_SIZE)
-    stitched_h = min(view._height / 2**w -y_c, Constants.CLIENT_TILE_SIZE)
+    stitched_w = min(view._width / 2**w -x_c, settings.CLIENT_TILE_SIZE)
+    stitched_h = min(view._height / 2**w -y_c, settings.CLIENT_TILE_SIZE)
 
     stitched = np.zeros((stitched_h, stitched_w), dtype=np.uint8)
 
 
-    if Constants.INVERT:
+    if settings.INVERT:
       stitched[:] = 255
 
     # sort the required tiles to always give priority in the same order
@@ -255,7 +255,7 @@ class Manager(object):
           # print 'CACHE HIT'
         else:
           # tile there but not correct zoomlevel
-          tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
+          tile.load(t_abs_data_path, settings.IMAGE_PREFIX)
           current_tile = tile.downsample(2**w)
           self._tiles[t][w] = tile._imagedata  
       else: 
@@ -270,7 +270,7 @@ class Manager(object):
             # print 'FREEING'
             del self._tiles[first_added_item]
 
-        tile.load(t_abs_data_path, Constants.IMAGE_PREFIX)
+        tile.load(t_abs_data_path, settings.IMAGE_PREFIX)
 
         current_tile = tile.downsample(2**w)
         self._tiles[t] = {w:current_tile}
@@ -284,8 +284,8 @@ class Manager(object):
       stitched_x = int(max(tx, top_left[0]) - top_left[0])
       stitched_y = int(max(ty, top_left[1]) - top_left[1])
 
-      stitched_w = int(min(t_width - max(top_left[0] - tx, 0), Constants.CLIENT_TILE_SIZE-stitched_x))
-      stitched_h = int(min(t_height - max(top_left[1] - ty, 0), Constants.CLIENT_TILE_SIZE-stitched_y))
+      stitched_w = int(min(t_width - max(top_left[0] - tx, 0), settings.CLIENT_TILE_SIZE-stitched_x))
+      stitched_h = int(min(t_height - max(top_left[1] - ty, 0), settings.CLIENT_TILE_SIZE-stitched_y))
 
 
       t_sub_x = int(max(tx, top_left[0]) - tx)
@@ -293,10 +293,10 @@ class Manager(object):
 
       stitched[stitched_y:stitched_y+stitched_h, stitched_x:stitched_x+stitched_w] = current_tile[t_sub_y:t_sub_y+stitched_h, t_sub_x:t_sub_x+stitched_w]
 
-    if Constants.INVERT:
+    if settings.INVERT:
       stitched = 255-stitched
 
-    if Constants.CACHE_CLIENT_TILES:
+    if settings.CACHE_CLIENT_TILES:
       # print 'Writing OSD tile', osd_file_url_full
       cv2.imwrite(osd_file_url_full, stitched)
 

@@ -3,7 +3,7 @@ import os
 import sys
 from collections import OrderedDict
 
-from constants import Constants
+from mbeam import settings
 from tile import Tile
 
 class FoV(object):
@@ -44,8 +44,8 @@ class FoV(object):
 
     # first, grab the meta data, then calculate the bounding box
     directory = self._directory
-    metadata_file = os.path.join(directory, Constants.METADATA_FILE)
-    image_coordinates_file = os.path.join(directory, Constants.IMAGE_COORDINATES_FILE)
+    metadata_file = os.path.join(directory, settings.METADATA_FILE)
+    image_coordinates_file = os.path.join(directory, settings.IMAGE_COORDINATES_FILE)
 
 
     #
@@ -137,8 +137,8 @@ class FoV(object):
     return None.
     '''
 
-    metadata_file = os.path.join(directory, Constants.METADATA_FILE)
-    image_coordinates_file = os.path.join(directory, Constants.IMAGE_COORDINATES_FILE)
+    metadata_file = os.path.join(directory, settings.METADATA_FILE)
+    image_coordinates_file = os.path.join(directory, settings.IMAGE_COORDINATES_FILE)
 
     # here we check if our image coordinates and metadata
     # files exist, if not we likely are not ready to parse yet
