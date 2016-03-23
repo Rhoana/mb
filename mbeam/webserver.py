@@ -1,6 +1,5 @@
 import json
 import os
-import socket
 import time
 import tornado
 import tornado.gen
@@ -35,9 +34,8 @@ class WebServer:
     '''
     '''
 
-    ip = socket.gethostbyname('')
-    port = self._port
     address = self._address
+    port = self._port
 
     webapp = tornado.web.Application([
       
@@ -52,7 +50,7 @@ class WebServer:
 
     webapp.listen(port, address=address, max_buffer_size=1024*1024*150000)
 
-    print 'Starting webserver at \033[93mhttp://' + ip + ':' + str(port) + '\033[0m'
+    print 'Starting webserver at \033[93mhttp://' + address + ':' + str(port) + '\033[0m'
 
     tornado.ioloop.IOLoop.instance().start()
 
