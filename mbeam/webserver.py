@@ -44,7 +44,7 @@ class WebServer:
       (r'/content/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/metainfo/(.*)', WebServerHandler, dict(webserver=self)),
       (r'/data/(.*)', WebServerHandler, dict(webserver=self)),
-      (r'/(.*)', tornado.web.StaticFileHandler, dict(path=os.path.join(os.path.dirname(__file__),'../web'), default_filename='index.html'))
+      (r'/(.*)', tornado.web.StaticFileHandler, dict(path=os.path.join(os.path.dirname(__file__), 'web'), default_filename='index.html'))
   
     ])
 
