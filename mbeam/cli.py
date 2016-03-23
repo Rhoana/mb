@@ -1,5 +1,7 @@
 import sys
-import mbeam
+
+from mbeam import manager
+from mbeam import webserver
 
 
 def main():
@@ -7,8 +9,8 @@ def main():
     if len(sys.argv) == 2:
         port = sys.argv[1]
 
-    manager = mbeam.Manager()
-    manager.start()
+    mgr = manager.Manager()
+    mgr.start()
 
-    webserver = mbeam.WebServer(manager, port)
-    webserver.start()
+    websrv = webserver.WebServer(mgr, port)
+    websrv.start()
