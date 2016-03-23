@@ -21,6 +21,7 @@ setup(
     long_description=README,
     include_package_data=True,
     install_requires=[
+        "argparse>=1.4.0",
         "scandir>=1.1",
         "numpy>=1.9.3",
         "scipy>=0.16.0",
