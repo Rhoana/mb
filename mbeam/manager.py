@@ -154,7 +154,8 @@ class Manager(object):
                     section._height,
                     section._tx,
                     section._ty,
-                    self)
+                    self,
+                    section._luts64_map)
 
             #
             # and add to our views dictionary
@@ -200,6 +201,11 @@ class Manager(object):
                 return cv2.imencode('.jpg', osd_tile)[1].tostring()
 
         view = self._views[data_path]
+
+        # Create an empty dictionary for the View's luts64_map, if there isn't a map
+        luts64_map = dict()
+        if view._luts64_map is not None:
+            luts64_map = view._luts64_map
 
         # calculate canvas coordinates
         x_c = x * settings.CLIENT_TILE_SIZE
@@ -266,7 +272,8 @@ class Manager(object):
                     # print 'CACHE HIT'
                 else:
                     # tile there but not correct zoomlevel
-                    tile.load(t_abs_data_path, settings.IMAGE_PREFIX)
+                    # print "Loading lut64_map of: {} --> {}".format(tile.id, luts64_map.get(os.path.split(tile.id)[-1].lower(), None))
+                    tile.load(t_abs_data_path, settings.IMAGE_PREFIX, lut_base64=luts64_map.get(os.path.split(tile.id)[-1].lower(), None))
                     current_tile = tile.downsample(2**w)
                     self._tiles[t][w] = tile._imagedata
             else:
@@ -282,7 +289,8 @@ class Manager(object):
                         # print 'FREEING'
                         del self._tiles[first_added_item]
 
-                tile.load(t_abs_data_path, settings.IMAGE_PREFIX)
+                # print "Loading lut64_map of: {} --> {}".format(tile.id, luts64_map.get(os.path.split(tile.id)[-1].lower(), None))
+                tile.load(t_abs_data_path, settings.IMAGE_PREFIX, lut_base64=luts64_map.get(os.path.split(tile.id)[-1].lower(), None))
 
                 current_tile = tile.downsample(2**w)
                 self._tiles[t] = {w: current_tile}

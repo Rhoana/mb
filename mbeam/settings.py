@@ -16,6 +16,7 @@ SETTINGS = dict(
     CACHE_CLIENT_TILES=False,
     CLIENT_TILE_CACHE_FOLDER=os.path.join(tempfile.gettempdir(), 'mbeam'),
     DEFAULT_DATA_FOLDER='data',
+    LUTS_FILE_SUFFIX=None,
 )
 
 
@@ -26,7 +27,7 @@ def load_settings(config_file=DEFAULT_CONFIG):
             cfg = yaml.load(f.read()) or {}
         for setting in cfg:
             if setting.upper() not in SETTINGS:
-                sys.stderr.write('ERROR: unsupported setting %s' % setting)
+                sys.stderr.write('ERROR: unsupported setting %s\n' % setting)
                 sys.exit(1)
             else:
                 settings[setting.upper()] = cfg[setting]

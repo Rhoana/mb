@@ -6,7 +6,7 @@ from mbeam import settings
 
 class View(object):
 
-    def __init__(self, data_path, tx, ty, width, height, fovs, tiles, centers):
+    def __init__(self, data_path, tx, ty, width, height, fovs, tiles, centers, luts64_map):
         '''
         '''
         self._data_path = data_path
@@ -19,6 +19,7 @@ class View(object):
         self._width = width
         self._height = height
         self._centers = centers
+        self._luts64_map = luts64_map
 
     @property
     def fovs(self):
@@ -27,7 +28,7 @@ class View(object):
         return self._fovs
 
     @staticmethod
-    def create(data_path, fovs, width, height, tx, ty, manager):
+    def create(data_path, fovs, width, height, tx, ty, manager, luts64_map=None):
         '''
         '''
         # we need to probe one tile and compare it to the full-res tile
@@ -102,4 +103,5 @@ class View(object):
             w_height,
             fovs,
             tiles,
-            w_centers)
+            w_centers,
+            luts64_map)

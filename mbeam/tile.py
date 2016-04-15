@@ -1,7 +1,11 @@
 import cv2
 import glob
 import os
+import base64
+import struct
 
+# The LUT decode format (from packed base64)
+DECODE_FORMAT = ''.join(['B'] * 256)
 
 class Tile(object):
 
@@ -39,7 +43,7 @@ class Tile(object):
     def height(self, value):
         self._height = value
 
-    def load(self, directory, file_prefix='', ratio_x=1, ratio_y=1):
+    def load(self, directory, file_prefix='', ratio_x=1, ratio_y=1, lut_base64=None):
         '''
         '''
 
@@ -48,6 +52,11 @@ class Tile(object):
 
         # this is grayscale loading with any OpenCV version
         self._imagedata = cv2.imread(file, 0)
+
+        # Apply the look up table of the tile
+        if lut_base64 is not None:
+            lut = struct.unpack(DECODE_FORMAT, base64.b64decode(lut_base64))
+            self._imagedata = cv2.LUT(self._imagedata, lut)
 
     def downsample(self, factor):
         '''
