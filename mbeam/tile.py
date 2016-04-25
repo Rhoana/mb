@@ -51,22 +51,13 @@ class Tile(object):
         file = glob.glob(file_path + '.*')[0]
 
         # this is grayscale loading with any OpenCV version
-        self._imagedata = cv2.imread(file, 0)
+        imagedata = cv2.imread(file, 0)
 
         # Apply the look up table of the tile
         if lut_base64 is not None:
             lut = struct.unpack(DECODE_FORMAT, base64.b64decode(lut_base64))
-            self._imagedata = cv2.LUT(self._imagedata, lut)
-
-    def downsample(self, factor):
-        '''
-        '''
-        if factor == 1.:
-            return self._imagedata
-
-        factor = 1. / factor
-        return cv2.resize(self._imagedata, (0, 0), fx=factor,
-                          fy=factor, interpolation=cv2.INTER_LINEAR)
+            imagedata = cv2.LUT(imagedata, lut)
+        return imagedata
 
     @staticmethod
     def from_string(string):

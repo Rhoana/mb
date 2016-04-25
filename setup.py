@@ -26,6 +26,8 @@ setup(
         "numpy>=1.9.3",
         "tornado>=4.3",
         "PyYAML>=3.10",
+        "lru-dict>=1.1.3",
+        "Pympler>=0.4.3",
     ],
     entry_points=dict(console_scripts=['mbeam = mbeam.cli:main']),
     zip_safe=False

@@ -25,8 +25,6 @@ class FoV(object):
             # calculate these values
             self.update_bounding_box()
 
-        self._imagedata = None
-
     def __str__(self):
         '''
         '''

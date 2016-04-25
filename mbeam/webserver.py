@@ -58,6 +58,10 @@ class WebServer:
                  WebServerHandler,
                  dict(
                      webserver=self)),
+                (r'/debug_mem/(.*)',
+                 WebServerHandler,
+                 dict(
+                     webserver=self)),
                 (r'/(.*)',
                  tornado.web.StaticFileHandler,
                  dict(
@@ -77,6 +81,7 @@ class WebServer:
               str(port) + '\033[0m')
 
         tornado.ioloop.IOLoop.instance().start()
+
 
     @tornado.gen.coroutine
     def handle(self, handler):
@@ -132,6 +137,13 @@ class WebServer:
 
             content = self._manager.get_image(path, x, y, z, w)
             content_type = 'image/jpeg'
+
+        elif splitted_request[1] == 'debug_mem':
+
+            from pympler import asizeof
+            content = asizeof.asized(self, detail=7).format().replace('\n','<br/>')
+            content += ' '.join(['{}: {}<br/>'.format(ii, kk) for ii, kk in enumerate(self._manager._tiles.keys())])
+            content_type = 'text/html'
 
         # invalid request
         if not content:

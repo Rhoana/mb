@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import os
 
-from collections import OrderedDict
+from lru import LRU
 
 from mbeam import settings
 from fov import FoV
@@ -17,11 +17,9 @@ class Manager(object):
     def __init__(self):
         '''
         '''
-        self._views = {}
-        # tile cache
-        self._tiles = OrderedDict()
-        # enough for 1 MFOV for 5 parallel users
-        self._tile_cache_size = 61 * 5
+        self._views = LRU(50)
+        # tile cache - enough for 1 MFOV for 10 parallel users
+        self._tiles = LRU(61 * 10)
 
         self._client_tiles = {}
 
@@ -125,7 +123,7 @@ class Manager(object):
         Get meta information for a requested data path.
         '''
 
-        if data_path not in self._views:
+        if data_path not in self._views.keys():
 
             path_type = self.check_path_type(data_path)
 
@@ -266,33 +264,17 @@ class Manager(object):
                 t_abs_data_path = data_path
 
             # print 'LOADING', os.path.join(t_abs_data_path, tile._filename)
-            if t in self._tiles:
-                if w in self._tiles[t]:
-                    current_tile = self._tiles[t][w]
-                    # print 'CACHE HIT'
-                else:
-                    # tile there but not correct zoomlevel
-                    # print "Loading lut64_map of: {} --> {}".format(tile.id, luts64_map.get(os.path.split(tile.id)[-1].lower(), None))
-                    tile.load(t_abs_data_path, settings.IMAGE_PREFIX, lut_base64=luts64_map.get(os.path.split(tile.id)[-1].lower(), None))
-                    current_tile = tile.downsample(2**w)
-                    self._tiles[t][w] = tile._imagedata
+            if t in self._tiles.keys() and w in self._tiles[t]:
+                current_tile = self._tiles[t][w]
+                # print 'CACHE HIT'
             else:
                 #
                 # we add to cache
                 #
-                if len(self._tiles.keys()) >= self._tile_cache_size:
-                    # delete the first added item but only if the item is not
-                    # the current tile
-                    first_added_item = self._tiles.keys()[0]
-
-                    if t != first_added_item:
-                        # print 'FREEING'
-                        del self._tiles[first_added_item]
-
                 # print "Loading lut64_map of: {} --> {}".format(tile.id, luts64_map.get(os.path.split(tile.id)[-1].lower(), None))
-                tile.load(t_abs_data_path, settings.IMAGE_PREFIX, lut_base64=luts64_map.get(os.path.split(tile.id)[-1].lower(), None))
+                tile_img = tile.load(t_abs_data_path, settings.IMAGE_PREFIX, lut_base64=luts64_map.get(os.path.split(tile.id)[-1].lower(), None))
 
-                current_tile = tile.downsample(2**w)
+                current_tile = Manager.downsample_image(tile_img, 2**w)
                 self._tiles[t] = {w: current_tile}
 
             # stitch it in our little openseadragon tile
@@ -319,10 +301,10 @@ class Manager(object):
                 stitched_h,
                 stitched_x:stitched_x +
                 stitched_w] = current_tile[
-                t_sub_y:t_sub_y +
-                stitched_h,
-                t_sub_x:t_sub_x +
-                stitched_w]
+                    t_sub_y:t_sub_y +
+                    stitched_h,
+                    t_sub_x:t_sub_x +
+                    stitched_w]
 
         if settings.INVERT:
             stitched = 255 - stitched
@@ -332,3 +314,15 @@ class Manager(object):
             cv2.imwrite(osd_file_url_full, stitched)
 
         return cv2.imencode('.jpg', stitched)[1].tostring()
+
+    # Helping function
+    @staticmethod
+    def downsample_image(imagedata, factor):
+        '''
+        '''
+        if factor == 1.:
+            return imagedata
+
+        factor = 1. / factor
+        return cv2.resize(imagedata, (0, 0), fx=factor,
+                          fy=factor, interpolation=cv2.INTER_LINEAR)

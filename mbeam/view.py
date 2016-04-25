@@ -43,10 +43,10 @@ class View(object):
         else:
             t_abs_data_path = data_path
 
-        first_tile.load(t_abs_data_path, settings.IMAGE_PREFIX)
+        first_tile_img = first_tile.load(t_abs_data_path, settings.IMAGE_PREFIX)
 
-        ratio_x = first_tile.width / float(first_tile._imagedata.shape[1])
-        ratio_y = first_tile.height / float(first_tile._imagedata.shape[0])
+        ratio_x = first_tile.width / float(first_tile_img.shape[1])
+        ratio_y = first_tile.height / float(first_tile_img.shape[0])
 
         w_width = width / ratio_x
         w_height = height / ratio_y

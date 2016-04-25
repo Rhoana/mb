@@ -27,9 +27,6 @@ class Section(object):
             # calculate these values
             self.update_bounding_box()
 
-        self._imagedata = None
-        self._thumbnail = None
-
         # Either None or a mapping of a tile filename to its base64 luts string
         self._luts64_map = luts64_map
 
