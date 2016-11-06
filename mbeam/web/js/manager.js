@@ -305,7 +305,7 @@ D.manager.prototype.setup_controls = function() {
   $("#contrast").slider({
     range: "min",
     min: 0,
-    max: 100,
+    max: 400,
     value: this._contrast,
     slide: function(e, ui) {
       MANAGER._contrast = ui.value;
