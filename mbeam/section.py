@@ -99,12 +99,13 @@ class Section(object):
         If the directory does not seem to be a section or is not ready,
         return None.
         '''
-
         if index_subdirs:
 
             fovs = []
 
             for f in Util.listdir(directory):
+                if f == 'AFASFailure':
+                    continue
                 fov_path = os.path.join(directory, f)
 
                 # if not os.path.isdir(fov_path):
